@@ -1,0 +1,34 @@
+version: '3.4'
+
+# Services
+services:
+
+# PhpMyAdmin Service
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: 127.0.0.1
+      PMA_PORT: 3306
+      APACHE_PORT: 7000
+    network_mode: host
+
+  # Plehanov
+  touchon:
+    env_file:
+      - ../.env
+    build:
+      context: ./src/
+      dockerfile: Dockerfile
+    container_name: touchon
+    restart: always
+    # tty: true
+    volumes:
+      - workdir:/opt/touchon/workdir
+      - /home/touchon/.hostpipe:/opt/touchon/hostpipe
+    network_mode: host
+
+# Volumes
+volumes:
+  workdir:
