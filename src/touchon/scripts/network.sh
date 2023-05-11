@@ -1,24 +1,31 @@
 #!/usr/bin/env bash
 
-cat << EOF > /opt/touchon/hostpipe
-cat << AEOF > /etc/network/interfaces.d/netcfg
-auto eth0
-allow-hotplug eth0
-iface eth0 inet static
-address 192.168.6.50
-netmask 255.255.255.0
+echo "sudo service networking restart" > /opt/touchon/hostpipe
+# echo "[NOTICE] Network service restart command executed"
 
-auto eth0:1
-allow-hotplug eth0:1
-iface eth0:1 inet static
-address $1
-netmask 255.255.255.0
-gateway $2
+# for (( i=1; i <= 20; i++ ))
+# do
 
-auto eth0:2
-allow-hotplug eth0:2
-iface eth0:2 inet static
-address $3
-netmask 255.255.255.0
-AEOF
-EOF
+#     echo "sudo systemctl is-active networking" > /opt/touchon/hostpipe
+#     sleep 0.5
+
+#     if [[ $(cat /opt/touchon/dockerpipe) == 'active' ]]; then
+#         echo "[OK] Network service is active"
+#         echo > /opt/touchon/dockerpipe
+#         break
+#     fi
+
+#     if [[ $i == 20 ]]; then
+#         echo "[ERROR] Waiting too long"
+#     fi
+
+# done
+
+# ip1=$(ip -4 addr show dev eth0 | grep eth0:1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+# ip2=$(ip -4 addr show dev eth0 | grep eth0:2 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+
+# if [[ $ip1 == $1 ]] && [[ $ip2 == $2 ]]; then
+# echo "[OK] New settings applied"
+# else
+# echo "[ERROR] Something went wrong"
+# fi

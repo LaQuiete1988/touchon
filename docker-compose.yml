@@ -27,6 +27,10 @@ services:
     volumes:
       - workdir:/opt/touchon/workdir
       - /home/touchon/.hostpipe:/opt/touchon/hostpipe
+      - /home/touchon/.dockerpipe:/opt/touchon/dockerpipe
+      - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
+      - /home/touchon/.ssh/id_rsa:/root/.ssh/id_rsa
+      - /home/touchon/.ssh/id_rsa.pub:/root/.ssh/id_rsa.pub
     network_mode: host
 
 # Volumes
