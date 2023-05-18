@@ -14,7 +14,7 @@ services:
       APACHE_PORT: 7000
     network_mode: host
 
-  # Plehanov
+  # Touchon
   touchon:
     env_file:
       - ../.env
@@ -29,8 +29,8 @@ services:
       - /home/touchon/.hostpipe:/opt/touchon/hostpipe
       - /home/touchon/.dockerpipe:/opt/touchon/dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
-      - /home/touchon/.ssh/id_rsa:/root/.ssh/id_rsa
-      - /home/touchon/.ssh/id_rsa.pub:/root/.ssh/id_rsa.pub
+      # Not for production
+      - /home/touchon/.ssh:/root/.ssh
     network_mode: host
 
 # Volumes

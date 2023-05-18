@@ -13,10 +13,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests supervisor nginx tzdata mariadb-server \
     mariadb-client iputils-ping cron php7.4-fpm php7.4-bcmath php7.4-mbstring php7.4-mysqli php7.4-pdo php7.4-xml rsync \
     openssh-client tar sshpass lftp wget unzip nano gettext-base \
+    # Not for production
     && apt-get install -y --no-install-recommends --no-install-suggests git ca-certificates \
-    # && ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo ${TIMEZONE} > /etc/timezone \
-    # && sed -i 's,;date.timezone =,date.timezone = '"$TZ"',g' /etc/php/7.4/fpm/php.ini \
-    # && sed -i 's,;date.timezone =,date.timezone = '"$TZ"',g' /etc/php/7.4/cli/php.ini \
     && sed -i 's,;clear_env = no,clear_env = no,g' /etc/php/7.4/fpm/pool.d/www.conf \
     && sed -i 's,user =.*,user = root,' /etc/php/7.4/fpm/pool.d/www.conf \
     && sed -i 's,group =.*,group = root,' /etc/php/7.4/fpm/pool.d/www.conf \
@@ -35,6 +33,7 @@ RUN apt-get update \
     # && chmod +x /opt/touchon/scripts/*
 
 COPY ./touchon /opt/touchon
-RUN chmod +x /opt/touchon/scripts/*
+RUN chmod +x /opt/touchon/scripts/* && chmod +x /opt/touchon/scripts/rs_control/rs_control
+RUN ln -s /opt/touchon/scripts/rs_control/rs_control /usr/bin/rs_control
 
 CMD ["/usr/bin/supervisord", "-c", "/opt/touchon/configs/supervisord.conf"]
