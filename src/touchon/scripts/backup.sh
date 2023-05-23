@@ -96,6 +96,23 @@ controllersBackup()
     done
 }
 
+mikrotikBackup()
+{
+    if [[ ! -d ${SSH_SOURCE_DIR}/daily/mikrotik ]]; then
+        mkdir -p ${SSH_SOURCE_DIR}/daily/mikrotik
+    fi
+
+    # Add "; export file=mikrotik.rsc hide-sensitive" to a mikrotik command to save a .rsc backup file. 
+    sshpass -p ${MIKROTIK_PASSWORD} ssh -o StrictHostKeyChecking=no ${MIKROTIK_USER}@${MIKROTIK_IP} \
+        "/system backup save name=mikrotik" 
+    sshpass -p ${MIKROTIK_PASSWORD} scp -o StrictHostKeyChecking=no \
+        ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.backup ${SSH_SOURCE_DIR}/daily/mikrotik
+    # Uncomment to get a .rsc backup file from a device.
+    # sshpass -p ${MIKROTIK_PASSWORD} scp -o StrictHostKeyChecking=no \
+    #     ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.rsc ${SSH_SOURCE_DIR}/daily/mikrotik
+
+}
+
 # $1 - daily or weekly
 userscriptsTarToRemote()
 {
@@ -145,6 +162,21 @@ controllersTarToRemote()
     fi
 }
 
+mikrotikTarToRemote()
+{
+    tar zcvf - -C ${SSH_SOURCE_DIR}/$1/mikrotik . | \
+        ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
+        "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
+        && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/mikrotik.tar.gz"
+
+    if [ $? -eq 0 ]; then
+        echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Mikrotik $1 backup syncronization with BackupServer succeeded." \
+            >> /var/log/cron.log
+    else
+        echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] Mikrotik $1 backup syncronization with BackupServer failed." \
+            >> /var/log/cron.log
+    fi
+}
 
 if [[ ! -d ${SSH_SOURCE_DIR}/daily ]]; then
     mkdir -p ${SSH_SOURCE_DIR}/daily
@@ -165,16 +197,19 @@ else
     versionsBackup
     dbBackup
     controllersBackup
+    mikrotikBackup
 
     userscriptsTarToRemote daily
     dbTarToRemote daily
     controllersTarToRemote daily
+    mikrotikTarToRemote daily
 
     if [[ ! $(ls ${SSH_SOURCE_DIR}/weekly) ]] || [[ $(date +'%u') == 1 ]]; then
         cp -r ${SSH_SOURCE_DIR}/daily/* ${SSH_SOURCE_DIR}/weekly
         userscriptsTarToRemote weekly
         dbTarToRemote weekly
         controllersTarToRemote weekly
+        mikrotikTarToRemote weekly
     fi
 
 fi

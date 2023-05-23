@@ -17,7 +17,7 @@ services:
   # Touchon
   touchon:
     env_file:
-      - ../.env
+      - ./.env
     build:
       context: ./src/
       dockerfile: Dockerfile

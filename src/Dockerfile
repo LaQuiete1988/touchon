@@ -11,7 +11,7 @@ WORKDIR /opt/touchon
 RUN apt-get update \ 
     && apt-get install -y --no-install-recommends --no-install-suggests locales locales-all \
     && apt-get install -y --no-install-recommends --no-install-suggests supervisor nginx tzdata mariadb-server \
-    mariadb-client iputils-ping cron php7.4-fpm php7.4-bcmath php7.4-mbstring php7.4-mysqli php7.4-pdo php7.4-xml rsync \
+    mariadb-client iputils-ping cron php7.4-fpm php7.4-bcmath php7.4-mbstring php7.4-mysqli php7.4-pdo php7.4-xml php7.4-curl rsync \
     openssh-client tar sshpass lftp wget unzip nano gettext-base \
     # Not for production
     && apt-get install -y --no-install-recommends --no-install-suggests git ca-certificates \
