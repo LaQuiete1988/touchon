@@ -12,14 +12,13 @@ if [[ ! -d ${WORK_DIR}/adm ]]; then
     find ${WORK_DIR}/adm -type f -exec chmod 644 {} \+
     find ${WORK_DIR}/adm -type d -exec chmod 755 {} \+
     chmod -R ug+rwx ${WORK_DIR}/adm/storage ${WORK_DIR}/adm/bootstrap/cache
-    php ${WORK_DIR}/adm/artisan config:clear
     mysql -uroot -p${MYSQL_ROOT_PASSWORD} << EOF
 DROP DATABASE IF EXISTS $MYSQL_DATABASE;
 CREATE DATABASE $MYSQL_DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 GRANT ALL ON $MYSQL_DATABASE.* to '$MYSQL_USER'@'%';
 FLUSH PRIVILEGES;
 EOF
-
+    php ${WORK_DIR}/adm/artisan config:clear
     composer -d ${WORK_DIR}/adm dump-autoload
 
     if [[ ${1:-latest} == "latest" ]]; then
@@ -30,9 +29,9 @@ VALUES (NULL, '${ADM_SUPERADMIN_USER}', '${ADM_SUPERADMIN_PASSWORD}', NULL, NOW(
 EOF
     fi
 
-    sed -i 's,APP_TIMEZONE=.*,APP_TIMEZONE='"${timeZone:-Europe/Moscow}"',g' ${WORK_DIR}/adm/.env
+    # sed -i 's,APP_TIMEZONE=.*,APP_TIMEZONE='"${timeZone:-Europe/Moscow}"',g' ${WORK_DIR}/adm/.env
     php ${WORK_DIR}/adm/artisan key:generate --force
-    php ${WORK_DIR}/adm/artisan config:clear
+    # php ${WORK_DIR}/adm/artisan config:clear
 
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
 
