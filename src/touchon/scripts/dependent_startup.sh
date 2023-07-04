@@ -21,7 +21,7 @@ envsubst "\$WORK_DIR" < /opt/touchon/configs/nginx.conf.template > /opt/touchon/
 
 supervisorctl start nginx
 
-source /opt/touchon/scripts/adm_installation.sh
-source /opt/touchon/scripts/core_installation.sh
+# source /opt/touchon/scripts/adm_installation.sh
+# source /opt/touchon/scripts/core_installation.sh
 
 sed -i 's,APP_TIMEZONE=.*,APP_TIMEZONE='"${timeZone:-Europe/Moscow}"',g' ${WORK_DIR}/adm/.env
