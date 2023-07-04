@@ -32,7 +32,7 @@ EOF
 
     php ${WORK_DIR}/adm/artisan key:generate --force
     
-    php ${WORK_DIR}/adm/artisan config:cache
+    php ${WORK_DIR}/adm/artisan config:clear
 
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
 
