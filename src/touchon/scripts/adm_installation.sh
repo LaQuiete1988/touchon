@@ -20,6 +20,8 @@ GRANT ALL ON $MYSQL_DATABASE.* to '$MYSQL_USER'@'%';
 FLUSH PRIVILEGES;
 EOF
 
+    composer -d ${WORK_DIR}/adm dump-autoload
+
     if [[ ${1:-latest} == "latest" ]]; then
         php ${WORK_DIR}/adm/artisan migrate --seed --force
         mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} << EOF
