@@ -30,8 +30,8 @@ VALUES (NULL, '${ADM_SUPERADMIN_USER}', '${ADM_SUPERADMIN_PASSWORD}', NULL, NOW(
 EOF
     fi
 
+    sed -i 's,APP_TIMEZONE=.*,APP_TIMEZONE='"${timeZone:-Europe/Moscow}"',g' ${WORK_DIR}/adm/.env
     php ${WORK_DIR}/adm/artisan key:generate --force
-    
     php ${WORK_DIR}/adm/artisan config:clear
 
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
