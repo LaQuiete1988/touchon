@@ -6,7 +6,7 @@ ENV LANGUAGE=en_GB.UTF-8
 ENV LC_ALL=en_GB.UTF-8
 WORKDIR /opt/touchon
 
-# COPY ./touchon /opt/touchon
+COPY ./touchon /opt/touchon
 
 RUN apt-get update \ 
     && apt-get install -y --no-install-recommends --no-install-suggests locales locales-all \
@@ -29,11 +29,8 @@ RUN apt-get update \
     && crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php'; } | crontab - \
     && mkdir -p /var/log/supervisor \
     && mkdir -p /run/mysqld \
-    && chown -R mysql:mysql /run/mysqld
-    # && chmod +x /opt/touchon/scripts/*
-
-COPY ./touchon /opt/touchon
-RUN chmod +x /opt/touchon/scripts/* && chmod +x /opt/touchon/scripts/rs_control/rs_control
-RUN ln -s /opt/touchon/scripts/rs_control/rs_control /usr/bin/rs_control
+    && chown -R mysql:mysql /run/mysqld \
+    && chmod +x /opt/touchon/scripts/* && chmod +x /opt/touchon/scripts/rs_control/rs_control \
+    && ln -s /opt/touchon/scripts/rs_control/rs_control /usr/bin/rs_control
 
 CMD ["/usr/bin/supervisord", "-c", "/opt/touchon/configs/supervisord.conf"]

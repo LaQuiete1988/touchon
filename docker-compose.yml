@@ -28,7 +28,12 @@ services:
       - /home/touchon/.hostpipe:/opt/touchon/hostpipe
       - /home/touchon/.dockerpipe:/opt/touchon/dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
+      # Not for production
+      - /home/touchon/.ssh:/root/.ssh
     network_mode: host
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+      - "/dev/ttyUSB1:/dev/ttyUSB1"
 
 # Volumes
 volumes:
