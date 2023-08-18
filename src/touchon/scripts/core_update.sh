@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-if [[ ! -d ${WORK_DIR}/server ]]; then
+if [[ -d ${WORK_DIR}/server ]]; then
+
+    php ${WORK_DIR}/server/server.php stop -g
+
+    mv ${WORK_DIR}/server ${WORK_DIR}/server.bak
 
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
         ftp://${FTP_SERVER}/core-release-${1:-latest}.zip
@@ -22,6 +26,8 @@ if [[ ! -d ${WORK_DIR}/server ]]; then
     fi
     echo "[OK] Core ver.$coreCurrentVersion installed"
 
+    # rm -rf ${WORK_DIR}/server.bak
+    
 else
-    echo "Core is already installed"
+    echo "Core is not installed"
 fi
