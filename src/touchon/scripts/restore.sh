@@ -21,21 +21,71 @@ databaseRestore()
 	fi
 
 	admBackupVersion=$(cat ${SSH_SOURCE_DIR}/daily/db/adm_version.txt | grep 'ADM' | awk '{printf $3}')
+	# if [[ -f ${WORK_DIR}/adm/readme.md ]]; then
+    #     admCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/adm/readme.md)
+    # else
+    #     admCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/adm/README.MD)
+    # fi
+
+	# if [[ ! -d ${WORK_DIR}/adm ]] || [[ "$admBackupVersion" != "$admCurrentVersion" ]]; then
+		
+	echo "Download adm ver $admBackupVersion"
+	[ -d ${WORK_DIR}/adm ] && mv ${WORK_DIR}/adm ${WORK_DIR}/adm.bak
+				
+	wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
+    	ftp://${FTP_SERVER}/adm-release-$admBackupVersion.zip
+    unzip -q ${WORK_DIR}/adm-release-$admBackupVersion.zip -d ${WORK_DIR} >/dev/null 2>&1
+    rm ${WORK_DIR}/adm-release-$admBackupVersion.zip
+
+# Очищаем БД
+   	mysql -uroot -p${MYSQL_ROOT_PASSWORD} << EOF
+DROP DATABASE IF EXISTS $MYSQL_DATABASE;
+CREATE DATABASE $MYSQL_DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+EOF
+
+# Пишем нужные переменные в .env
+    cat << EOF > ${WORK_DIR}/adm/.env
+APP_NAME="TouchON Admin Panel"
+APP_ENV=production
+APP_KEY=
+APP_DEBUG=true
+APP_LOG_LEVEL=debug
+APP_URL=http://localhost
+APP_TIMEZONE=Europe/Moscow
+DEBUGBAR_ENABLED=false
+SERVER_FOLDER=${WORK_DIR}/server
+IMAGES_BASE_URI=${IMG_MNG_HOST}
+DB_CONNECTION=mysql
+DB_HOST=${MYSQL_HOST}
+DB_PORT=${MYSQL_PORT}
+DB_DATABASE=${MYSQL_DATABASE}
+DB_USERNAME=${MYSQL_USER}
+DB_PASSWORD=${MYSQL_PASSWORD}
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+QUEUE_DRIVER=sync
+EOF
+
+	composer -n -d ${WORK_DIR}/adm install
+
+    php ${WORK_DIR}/adm/artisan config:clear
+    php ${WORK_DIR}/adm/artisan key:generate --force
+
+# Добавляем симлинк на каталог пользовательских скриптов
+	[[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts
+	[[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
+
+	gunzip < ${SSH_SOURCE_DIR}/daily/db/db_backup.sql.gz | \
+		mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE}
+	
 	if [[ -f ${WORK_DIR}/adm/readme.md ]]; then
         admCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/adm/readme.md)
     else
         admCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/adm/README.MD)
     fi
-
-	if [[ ! -d ${WORK_DIR}/adm ]] || [[ "$admBackupVersion" != "$admCurrentVersion" ]]; then
-		
-			echo "Download adm ver $admBackupVersion"
-			[ -d ${WORK_DIR}/adm ] && mv ${WORK_DIR}/adm ${WORK_DIR}/adm.bak
-			source adm_installation.sh $admBackupVersion
-	fi
-
-	gunzip < ${SSH_SOURCE_DIR}/daily/db/db_backup.sql.gz | \
-		mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE}
+    echo "[OK] Adm ver.$admCurrentVersion has been installed"
 }
 
 userscriptsRestore()
@@ -47,18 +97,32 @@ userscriptsRestore()
     fi
 
 	coreBackupVersion=$(cat ${SSH_SOURCE_DIR}/daily/userscripts/core_version.txt | grep 'CORE' | awk '{printf $3}')
-	if [[ -f ${WORK_DIR}/server/readme.md ]]; then
+		
+	echo "Download core ver $coreBackupVersion"
+	if [[ -d ${WORK_DIR}/server ]]; then
+		php ${WORK_DIR}/server/server.php stop -g
+		mv ${WORK_DIR}/server ${WORK_DIR}/server.bak
+	fi
+	# source core_installation.sh $coreBackupVersion
+	wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
+    	ftp://${FTP_SERVER}/core-release-$coreBackupVersion.zip
+    unzip -q ${WORK_DIR}/core-release-$coreBackupVersion.zip -d ${WORK_DIR} >/dev/null 2>&1
+    rm ${WORK_DIR}/core-release-$coreBackupVersion.zip
+
+    sed -i "s/\$host =.*/\$host = getenv(\'MYSQL_HOST\');/g" ${WORK_DIR}/server/include.php
+    sed -i "s/\$dbname =.*/\$dbname = getenv(\'MYSQL_DATABASE\');/g" ${WORK_DIR}/server/include.php
+    sed -i "s/\$dbuser =.*/\$dbuser = getenv(\'MYSQL_USER\');/g" ${WORK_DIR}/server/include.php
+    sed -i "s/\$dbpass =.*/\$dbpass = getenv(\'MYSQL_PASSWORD\');/g" ${WORK_DIR}/server/include.php
+    sed -i 's/php -f thread.php/cd \".ROOT_DIR.\" \&\& php -f thread.php/' ${WORK_DIR}/server/classes/SendSocket.php
+
+    php ${WORK_DIR}/server/server.php start -d
+
+    if [[ -f ${WORK_DIR}/server/readme.md ]]; then
         coreCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/server/readme.md)
     else
         coreCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/server/README.MD)
     fi
-	
-	if [[ ! -d ${WORK_DIR}/server ]] || [[ "$coreBackupVersion" != "$coreCurrentVersion" ]]; then
-		
-			echo "Download core ver $coreBackupVersion"
-			[ -d ${WORK_DIR}/server ] && mv ${WORK_DIR}/server ${WORK_DIR}/server.bak
-			source core_installation.sh $coreBackupVersion
-	fi
+    echo "[OK] Core ver.$coreCurrentVersion installed"
 
 	cp -r ${SSH_SOURCE_DIR}/$1/userscripts/userscripts/* ${WORK_DIR}/server/userscripts
 }
