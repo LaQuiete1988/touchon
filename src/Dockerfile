@@ -13,7 +13,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests supervisor nginx tzdata mariadb-server \
     mariadb-client iputils-ping cron php7.4-fpm php7.4-bcmath php7.4-mbstring php7.4-mysqli php7.4-pdo php7.4-xml php7.4-curl rsync \
     openssh-client tar sshpass lftp wget unzip nano gettext-base composer \
-    # Not for production
     && apt-get install -y --no-install-recommends --no-install-suggests git ca-certificates \
     && sed -i 's,;clear_env = no,clear_env = no,g' /etc/php/7.4/fpm/pool.d/www.conf \
     && sed -i 's,user =.*,user = root,' /etc/php/7.4/fpm/pool.d/www.conf \
