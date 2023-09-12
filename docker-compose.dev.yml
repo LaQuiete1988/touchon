@@ -20,19 +20,25 @@ services:
       - ./.env
     build:
       context: ./src/
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+#      args:
+#        UID: ${UID:-1000}
+#        GID: ${GID:-1000}
+#        UNAME: ${UNAME:-touchon}
     container_name: touchon
     restart: always
     volumes:
-      - workdir:/opt/touchon/workdir
+      - workdir:/opt/touchon
+      - /home/touchon/touchon/apps/adm:/opt/touchon/workdir/adm
+      - /home/touchon/touchon/apps/server:/opt/touchon/workdir/server
       - /home/touchon/.hostpipe:/opt/touchon/hostpipe
       - /home/touchon/.dockerpipe:/opt/touchon/dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
+      - /home/touchon/.ssh:/root/.ssh
     network_mode: host
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
       - "/dev/ttyUSB1:/dev/ttyUSB1"
 
-# Volumes
 volumes:
   workdir:

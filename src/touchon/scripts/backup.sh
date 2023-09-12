@@ -92,7 +92,8 @@ controllersBackup()
     do
         echo ${ip_array[i]}
         php /opt/touchon/scripts/megad-cfg-2561.php \
-            --ip ${ip_array[i]} --read-conf ${SSH_SOURCE_DIR}/daily/controllers/${ip_array[i]}.cfg -p sec
+            --ip ${ip_array[i]} --read-conf ${SSH_SOURCE_DIR}/daily/controllers/${ip_array[i]}.cfg \
+            -p sec --local-ip $(ip -4 addr show dev eth0 | grep eth0:2 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
     done
 }
 
