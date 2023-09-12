@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 if [[ -d ${WORK_DIR}/adm ]]; then
-
     mv ${WORK_DIR}/adm ${WORK_DIR}/adm.bak
+fi
 
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
         ftp://${FTP_SERVER}/adm-release-${1:-latest}.zip
@@ -34,11 +34,14 @@ SESSION_LIFETIME=120
 QUEUE_DRIVER=sync
 EOF
 
+    composer -n -d ${WORK_DIR}/adm clearcache
     composer -n -d ${WORK_DIR}/adm install
 
     php ${WORK_DIR}/adm/artisan config:clear
     php ${WORK_DIR}/adm/artisan key:generate --force
-    php ${WORK_DIR}/adm/artisan migrate --seed --force
+    if [ -d ${WORK_DIR}/mysql/${MYSQL_DATABASE} ] ; then
+        php ${WORK_DIR}/adm/artisan migrate --seed --force
+    fi
 
 # Добавляем симлинк на каталог пользовательских скриптов
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts
@@ -52,7 +55,3 @@ EOF
     echo "[OK] Adm ver.$admCurrentVersion has been installed"
 
     # rm -rf ${WORK_DIR}/adm.bak
-
-else
-    echo "Adm is not installed"
-fi

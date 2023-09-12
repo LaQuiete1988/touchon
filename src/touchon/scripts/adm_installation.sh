@@ -36,17 +36,14 @@ SESSION_DRIVER=file
 SESSION_LIFETIME=120
 QUEUE_DRIVER=sync
 EOF
-
+    composer -n -d ${WORK_DIR}/adm clearcache
     composer -n -d ${WORK_DIR}/adm install
 
     php ${WORK_DIR}/adm/artisan config:clear
     php ${WORK_DIR}/adm/artisan key:generate --force
     php ${WORK_DIR}/adm/artisan migrate --seed --force
-
-    mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} << EOF
-INSERT INTO smarthome.users (id, login, password, remember_token, created_at, updated_at, type) 
-VALUES (NULL, '${ADM_SUPERADMIN_USER}', '${ADM_SUPERADMIN_PASSWORD}', NULL, NOW(), NOW(), 'superadmin');
-EOF
+    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD}
+    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER} ${ADM_PARTNER_PASSWORD}
 
 # Добавляем симлинк на каталог пользовательских скриптов
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts
