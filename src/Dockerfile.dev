@@ -1,12 +1,5 @@
-FROM ubuntu:focal
-
-#ARG UNAME
-#ARG UID
-#ARG GID
-
-#ENV UAME=${UNAME}
-#ENV UID=${UID}
-#ENV GID=${GID}
+ARG UBUNTU_VERSION
+FROM ubuntu:${UBUNTU_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_GB.UTF-8
@@ -14,21 +7,15 @@ ENV LANGUAGE=en_GB.UTF-8
 ENV LC_ALL=en_GB.UTF-8
 WORKDIR /opt/touchon
 
-COPY ./touchon /opt/touchon
-
 RUN apt-get update \ 
     && apt-get install -y --no-install-recommends --no-install-suggests locales locales-all \
     && apt-get install -y --no-install-recommends --no-install-suggests supervisor nginx tzdata mariadb-server \
-    mariadb-client iputils-ping cron php7.4-fpm php7.4-bcmath php7.4-mbstring php7.4-mysqli php7.4-pdo php7.4-xml php7.4-curl rsync \
-    openssh-client tar sshpass lftp wget unzip nano gettext-base composer \
-    && apt-get install -y --no-install-recommends --no-install-suggests git ca-certificates \
-    #&& addgroup --gid ${GID} --system ${UNAME} \
-    #&& adduser --ingroup ${UNAME} --system --disabled-password --shell /bin/bash --uid ${UID} ${UNAME} \
-    #&& sed -i "s/user =.*/user = ${UNAME}/g" /etc/php/7.4/fpm/pool.d/www.conf \
-    #&& sed -i "s/group =.*/group = ${UNAME}/g" /etc/php/7.4/fpm/pool.d/www.conf \
-    && sed -i 's,;clear_env = no,clear_env = no,g' /etc/php/7.4/fpm/pool.d/www.conf \
-    && sed -i 's,user =.*,user = root,' /etc/php/7.4/fpm/pool.d/www.conf \
-    && sed -i 's,group =.*,group = root,' /etc/php/7.4/fpm/pool.d/www.conf \
+    mariadb-client iputils-ping cron php-fpm php-bcmath php-mbstring php-mysqli php-pdo php-xml php-curl rsync \
+    openssh-client tar sshpass lftp wget unzip nano gettext-base composer git ca-certificates \
+    && phpVersion=$(php -v | head -n 1 | awk '/PHP/ {print $2}' | cut -d. -f1,2) \
+    && sed -i 's,;clear_env = no,clear_env = no,g' /etc/php/${phpVersion}/fpm/pool.d/www.conf \
+    && sed -i 's,user =.*,user = root,' /etc/php/${phpVersion}/fpm/pool.d/www.conf \
+    && sed -i 's,group =.*,group = root,' /etc/php/${phpVersion}/fpm/pool.d/www.conf \
     && crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1'; } | crontab - \
     && crontab -l | { cat; echo '*/5 * * * * cd ${WORK_DIR}/server && php cron.php 5'; } | crontab - \
     && crontab -l | { cat; echo '*/10 * * * * cd ${WORK_DIR}/server && php cron.php 10'; } | crontab - \
@@ -41,7 +28,6 @@ RUN apt-get update \
     && mkdir -p /var/log/supervisor \
     && mkdir -p /run/mysqld \
     && chown -R mysql:mysql /run/mysqld \
-    && chmod +x /opt/touchon/scripts/* && chmod +x /opt/touchon/scripts/rs_control/rs_control \
     && ln -s /opt/touchon/scripts/rs_control/rs_control /usr/bin/rs_control
 
 CMD ["/usr/bin/supervisord", "-c", "/opt/touchon/configs/supervisord.conf"]

@@ -20,25 +20,44 @@ services:
       - ./.env
     build:
       context: ./src/
+      args:
+        UBUNTU_VERSION: jammy
       dockerfile: Dockerfile.dev
-#      args:
-#        UID: ${UID:-1000}
-#        GID: ${GID:-1000}
-#        UNAME: ${UNAME:-touchon}
     container_name: touchon
     restart: always
     volumes:
-      - workdir:/opt/touchon
-      - /home/touchon/touchon/apps/adm:/opt/touchon/workdir/adm
-      - /home/touchon/touchon/apps/server:/opt/touchon/workdir/server
-      - /home/touchon/.hostpipe:/opt/touchon/hostpipe
-      - /home/touchon/.dockerpipe:/opt/touchon/dockerpipe
+      - workdir:/opt/touchon/workdir
+      - ~/touchon/src/configs:/opt/touchon/configs
+      - ~/touchon/src/scripts:/opt/touchon/scripts
+      - ~/touchon/apps/adm:/opt/touchon/workdir/adm
+      - ~/touchon/apps/server:/opt/touchon/workdir/server
+      - ~/.hostpipe:/opt/touchon/hostpipe
+      - ~/.dockerpipe:/opt/touchon/dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
-      - /home/touchon/.ssh:/root/.ssh
+      - ~/.ssh:/root/.ssh
     network_mode: host
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
       - "/dev/ttyUSB1:/dev/ttyUSB1"
+
+  # MediaMTX
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: always
+    environment:
+      MTX_API: yes
+      MTX_APIADDRESS: :9997
+      MTX_RTMP: no
+      MTX_RTSP: no
+      MTX_WEBRTC: no
+      MTX_SRT: no
+      MTX_PROTOCOLS: tcp
+      MTX_HLSENCRYPTION: false
+    # volumes:
+    #   - ./mediamtx/server.key:/server.key
+    #   - ./mediamtx/server.crt:/server.crt
+    network_mode: host
 
 volumes:
   workdir:
