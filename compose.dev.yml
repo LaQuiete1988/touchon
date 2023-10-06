@@ -1,0 +1,15 @@
+version: '3.4'
+
+# Services
+services:
+
+  # Touchon
+  touchon:
+    build:
+      # dockerfile: Dockerfile.dev
+      args:
+        EXTRA_PACKAGES: "git ca-certificates"
+    volumes:
+      - ~/touchon/apps/adm:${WORK_DIR}/adm
+      - ~/touchon/apps/server:${WORK_DIR}/server
+      - ~/.ssh:/root/.ssh

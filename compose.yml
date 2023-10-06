@@ -17,24 +17,24 @@ services:
   # Touchon
   touchon:
     env_file:
-      - ./.env
+      - ~/touchon/.env
     build:
-      context: ./src/
+      context: ~/touchon/src/
       args:
-        UBUNTU_VERSION: jammy
-      dockerfile: Dockerfile.dev
+        UBUNTU_VERSION: focal
+      dockerfile: Dockerfile
     container_name: touchon
     restart: always
     volumes:
-      - workdir:/opt/touchon/workdir
-      - ~/touchon/src/configs:/opt/touchon/configs
-      - ~/touchon/src/scripts:/opt/touchon/scripts
-      - ~/touchon/apps/adm:/opt/touchon/workdir/adm
-      - ~/touchon/apps/server:/opt/touchon/workdir/server
-      - ~/.hostpipe:/opt/touchon/hostpipe
-      - ~/.dockerpipe:/opt/touchon/dockerpipe
+      - mysql:/var/lib/mysql
+      - adm:${WORK_DIR}/adm
+      - server:${WORK_DIR}/server 
+      - backups:${WORK_DIR}/backups
+      - ~/touchon/src/configs:${WORK_DIR}/configs
+      - ~/touchon/src/scripts:${WORK_DIR}/scripts
+      - ~/.hostpipe:${WORK_DIR}/hostpipe
+      - ~/.dockerpipe:${WORK_DIR}/dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
-      - ~/.ssh:/root/.ssh
     network_mode: host
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
@@ -60,4 +60,7 @@ services:
     network_mode: host
 
 volumes:
-  workdir:
+  mysql:
+  server:
+  adm:
+  backups:

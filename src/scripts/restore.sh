@@ -4,23 +4,23 @@
 remoteArchiveDownload()
 {
 	echo "No local $2 backups found"
-	[ -d ${SSH_SOURCE_DIR}/$1/$2 ] || mkdir -p ${SSH_SOURCE_DIR}/$1/$2
+	[ -d ${WORK_DIR}/backups/$1/$2 ] || mkdir -p ${WORK_DIR}/backups/$1/$2
 	scp -P ${SSH_PORT} -o StrictHostKeyChecking=no -i ${WORK_DIR}/ssh/id_rsa \
-        ${SSH_USER}@${SSH_SERVER}:${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/$2.tar.gz ${SSH_SOURCE_DIR}/$1
-	tar zxf ${SSH_SOURCE_DIR}/$1/$2.tar.gz -C ${SSH_SOURCE_DIR}/$1/$2
-	rm ${SSH_SOURCE_DIR}/$1/$2.tar.gz
+        ${SSH_USER}@${SSH_SERVER}:${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/$2.tar.gz ${WORK_DIR}/backups/$1
+	tar zxf ${WORK_DIR}/backups/$1/$2.tar.gz -C ${WORK_DIR}/backups/$1/$2
+	rm ${WORK_DIR}/backups/$1/$2.tar.gz
 	echo "> $2 backups downloaded"
 }
 
 databaseRestore()
 {
-    if [[ ! -d ${SSH_SOURCE_DIR}/$1/db ]] || [[ ! $(ls -A ${SSH_SOURCE_DIR}/$1/db) ]]; then
+    if [[ ! -d ${WORK_DIR}/backups/$1/db ]] || [[ ! $(ls -A ${WORK_DIR}/backups/$1/db) ]]; then
 		remoteArchiveDownload $1 db
 	else
 		echo "Local database backups found"
 	fi
 
-	admBackupVersion=$(cat ${SSH_SOURCE_DIR}/daily/db/adm_version.txt | grep 'ADM' | awk '{printf $3}')
+	admBackupVersion=$(cat ${WORK_DIR}/backups/daily/db/adm_version.txt | grep 'ADM' | awk '{printf $3}')
 	# if [[ -f ${WORK_DIR}/adm/readme.md ]]; then
     #     admCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/adm/readme.md)
     # else
@@ -77,7 +77,7 @@ EOF
 	[[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts
 	[[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
 
-	gunzip < ${SSH_SOURCE_DIR}/daily/db/db_backup.sql.gz | \
+	gunzip < ${WORK_DIR}/backups/$1/db/db_backup.sql.gz | \
 		mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE}
 	
 	if [[ -f ${WORK_DIR}/adm/readme.md ]]; then
@@ -90,13 +90,13 @@ EOF
 
 userscriptsRestore()
 {
-	if [[ ! -d ${SSH_SOURCE_DIR}/$1/userscripts ]] || [[ ! $(ls -A ${SSH_SOURCE_DIR}/$1/userscripts) ]]; then
+	if [[ ! -d ${WORK_DIR}/backups/$1/userscripts ]] || [[ ! $(ls -A ${WORK_DIR}/backups/$1/userscripts) ]]; then
         remoteArchiveDownload $1 userscripts
     else
         echo "Backups are storing locally"
     fi
 
-	coreBackupVersion=$(cat ${SSH_SOURCE_DIR}/daily/userscripts/core_version.txt | grep 'CORE' | awk '{printf $3}')
+	coreBackupVersion=$(cat ${WORK_DIR}/backups/daily/userscripts/core_version.txt | grep 'CORE' | awk '{printf $3}')
 		
 	echo "Download core ver $coreBackupVersion"
 	if [[ -d ${WORK_DIR}/server ]]; then
@@ -124,12 +124,12 @@ userscriptsRestore()
     fi
     echo "[OK] Core ver.$coreCurrentVersion installed"
 
-	cp -r ${SSH_SOURCE_DIR}/$1/userscripts/userscripts/* ${WORK_DIR}/server/userscripts
+	cp -r ${WORK_DIR}/backups/$1/userscripts/userscripts/* ${WORK_DIR}/server/userscripts
 }
 
 controllerRestore()
 {
-    if [[ ! -d ${SSH_SOURCE_DIR}/$1/controllers ]] || [[ ! $(ls -A ${SSH_SOURCE_DIR}/$1/controllers) ]]; then
+    if [[ ! -d ${WORK_DIR}/backups/$1/controllers ]] || [[ ! $(ls -A ${WORK_DIR}/backups/$1/controllers) ]]; then
         remoteArchiveDownload $1 controllers
     else
         echo "Backups are storing locally"
@@ -137,7 +137,7 @@ controllerRestore()
 
 	localIp=$(ip a | grep eth0:2 | awk '/inet/ {print $2}' | cut -d/ -f1)
 	
-	ctrIps=$(php /opt/touchon/scripts/megad-cfg-2561.php --scan --local-ip $localIp)
+	ctrIps=$(php ${WORK_DIR}/scripts/megad-cfg-2561.php --scan --local-ip $localIp)
 	PS3="Choose a controller to restore config: "
 	select ctr in $ctrIps
 	do
@@ -145,7 +145,7 @@ controllerRestore()
 	break
 	done
 
-	cfgFiles=$(ls /opt/touchon/workdir/backups/daily/controllers)
+	cfgFiles=$(ls ${WORK_DIR}/backups/daily/controllers)
 	PS3="Choose a config file: "
 	select cfg in $cfgFiles
 	do
@@ -156,8 +156,8 @@ controllerRestore()
 	while true; do
     	read -p "Do you want to write config file $cfgToRestore to controller $ctrToRestore? y/N " yn
     	case $yn in
-        	[Yy]* ) php /opt/touchon/scripts/megad-cfg-2561.php --ip $ctrToRestore \
-				--write-conf ${SSH_SOURCE_DIR}/$1/controllers/$cfgToRestore -p sec; break;;
+        	[Yy]* ) php ${WORK_DIR}/scripts/megad-cfg-2561.php --ip $ctrToRestore \
+				--write-conf ${WORK_DIR}/backups/$1/controllers/$cfgToRestore -p sec; break;;
         	[Nn]* ) exit;;
         	* ) exit;;
     	esac

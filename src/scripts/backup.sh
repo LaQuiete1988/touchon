@@ -2,7 +2,7 @@
 
 function userscriptsBackup ()
 {
-    rsync -azh --delete ${WORK_DIR}/server/userscripts ${SSH_SOURCE_DIR}/daily/userscripts
+    rsync -azh --delete ${WORK_DIR}/server/userscripts ${WORK_DIR}/backups/daily/userscripts
     if [ $? -eq 0 ]; then
             echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Userscripts daily backup succeeded." \
                 >> /var/log/cron.log
@@ -15,14 +15,14 @@ function userscriptsBackup ()
 
 function dbBackup ()
 {
-    if [[ ! -d ${SSH_SOURCE_DIR}/daily/db ]]; then
-        mkdir -p ${SSH_SOURCE_DIR}/daily/db
+    if [[ ! -d ${WORK_DIR}/backups/daily/db ]]; then
+        mkdir -p ${WORK_DIR}/backups/daily/db
     fi
 
     mysqldump --host=${MYSQL_HOST} --user=${MYSQL_USER} --password=${MYSQL_PASSWORD} ${MYSQL_DATABASE} \
-        | gzip > ${SSH_SOURCE_DIR}/daily/db/db_backup.sql.gz
+        | gzip > ${WORK_DIR}/backups/daily/db/db_backup.sql.gz
 
-    if [[ -f ${SSH_SOURCE_DIR}/daily/db/db_backup.sql.gz ]]; then
+    if [[ -f ${WORK_DIR}/backups/daily/db/db_backup.sql.gz ]]; then
         echo "$(date +'%b %d %H:%M:%S')  MySQL [OK] DB daily backup is succeeded" >> /var/log/cron.log
     else
         echo "$(date +'%b %d %H:%M:%S')  MySQL [ERROR] DB daily backup failed" >> /var/log/cron.log
@@ -32,12 +32,12 @@ function dbBackup ()
 
 function versionsBackup ()
 {
-    if [[ ! -d ${SSH_SOURCE_DIR}/daily/db ]]; then
-        mkdir -p ${SSH_SOURCE_DIR}/daily/db
+    if [[ ! -d ${WORK_DIR}/backups/daily/db ]]; then
+        mkdir -p ${WORK_DIR}/backups/daily/db
     fi
 
-    if [[ ! -d ${SSH_SOURCE_DIR}/daily/userscripts ]]; then
-        mkdir -p ${SSH_SOURCE_DIR}/daily/userscripts
+    if [[ ! -d ${WORK_DIR}/backups/daily/userscripts ]]; then
+        mkdir -p ${WORK_DIR}/backups/daily/userscripts
     fi
 
     if [[ -f ${WORK_DIR}/server/readme.md ]]; then
@@ -52,26 +52,26 @@ function versionsBackup ()
         admCurrentVersion=$(sed -n '/.*ver /s///p' < ${WORK_DIR}/adm/README.MD)
     fi
 
-    if [[ ! -f ${SSH_SOURCE_DIR}/daily/db/adm_version.txt ]]; then
-        touch ${SSH_SOURCE_DIR}/daily/db/adm_version.txt
+    if [[ ! -f ${WORK_DIR}/backups/daily/db/adm_version.txt ]]; then
+        touch ${WORK_DIR}/backups/daily/db/adm_version.txt
     else
-        admBackupVersion=$(cat ${SSH_SOURCE_DIR}/daily/db/adm_version.txt | grep 'ADM' | awk '{printf $3}')
+        admBackupVersion=$(cat ${WORK_DIR}/backups/daily/db/adm_version.txt | grep 'ADM' | awk '{printf $3}')
     fi
 
-    if [[ ! -f ${SSH_SOURCE_DIR}/daily/userscripts/core_version.txt ]]; then
-        touch ${SSH_SOURCE_DIR}/daily/userscripts/core_version.txt
+    if [[ ! -f ${WORK_DIR}/backups/daily/userscripts/core_version.txt ]]; then
+        touch ${WORK_DIR}/backups/daily/userscripts/core_version.txt
     else
-        coreBackupVersion=$(cat ${SSH_SOURCE_DIR}/daily/userscripts/core_version.txt | grep 'CORE' | awk '{printf $3}')
+        coreBackupVersion=$(cat ${WORK_DIR}/backups/daily/userscripts/core_version.txt | grep 'CORE' | awk '{printf $3}')
     fi
 
     if [[ "$coreBackupVersion" != "$coreCurrentVersion" ]]; then 
-        echo -e "CORE version $coreCurrentVersion" > ${SSH_SOURCE_DIR}/daily/userscripts/core_version.txt
+        echo -e "CORE version $coreCurrentVersion" > ${WORK_DIR}/backups/daily/userscripts/core_version.txt
         echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Core version updated." \
                 >> /var/log/cron.log
     fi
 
     if [[ "$admBackupVersion" != "$admCurrentVersion" ]]; then 
-        echo -e "ADM version $admCurrentVersion" > ${SSH_SOURCE_DIR}/daily/db/adm_version.txt
+        echo -e "ADM version $admCurrentVersion" > ${WORK_DIR}/backups/daily/db/adm_version.txt
         echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Adm version updated." \
                 >> /var/log/cron.log
     fi
@@ -79,8 +79,8 @@ function versionsBackup ()
 
 controllersBackup()
 {
-    if [[ ! -d ${SSH_SOURCE_DIR}/daily/controllers ]]; then
-        mkdir -p ${SSH_SOURCE_DIR}/daily/controllers
+    if [[ ! -d ${WORK_DIR}/backups/daily/controllers ]]; then
+        mkdir -p ${WORK_DIR}/backups/daily/controllers
     fi
 
     ipString=$(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -se "SELECT ip_address FROM $MYSQL_DATABASE.devices WHERE type=1 AND active=1;")
@@ -91,33 +91,33 @@ controllersBackup()
     for (( i=0; i < ${#ip_array[*]}; i++ ))
     do
         echo ${ip_array[i]}
-        php /opt/touchon/scripts/megad-cfg-2561.php \
-            --ip ${ip_array[i]} --read-conf ${SSH_SOURCE_DIR}/daily/controllers/${ip_array[i]}.cfg \
+        php ${WORK_DIR}/scripts/megad-cfg-2561.php \
+            --ip ${ip_array[i]} --read-conf ${WORK_DIR}/backups/daily/controllers/${ip_array[i]}.cfg \
             -p sec --local-ip $(ip -4 addr show dev eth0 | grep eth0:2 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
     done
 }
 
 mikrotikBackup()
 {
-    if [[ ! -d ${SSH_SOURCE_DIR}/daily/mikrotik ]]; then
-        mkdir -p ${SSH_SOURCE_DIR}/daily/mikrotik
+    if [[ ! -d ${WORK_DIR}/backups/daily/mikrotik ]]; then
+        mkdir -p ${WORK_DIR}/backups/daily/mikrotik
     fi
 
     # Add "; export file=mikrotik.rsc hide-sensitive" to a mikrotik command to save a .rsc backup file. 
     sshpass -p ${MIKROTIK_PASSWORD} ssh -o StrictHostKeyChecking=no ${MIKROTIK_USER}@${MIKROTIK_IP} \
         "/system backup save name=mikrotik" 
     sshpass -p ${MIKROTIK_PASSWORD} scp -o StrictHostKeyChecking=no \
-        ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.backup ${SSH_SOURCE_DIR}/daily/mikrotik
+        ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.backup ${WORK_DIR}/backups/daily/mikrotik
     # Uncomment to get a .rsc backup file from a device.
     # sshpass -p ${MIKROTIK_PASSWORD} scp -o StrictHostKeyChecking=no \
-    #     ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.rsc ${SSH_SOURCE_DIR}/daily/mikrotik
+    #     ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.rsc ${WORK_DIR}/backups/daily/mikrotik
 
 }
 
 # $1 - daily or weekly
 userscriptsTarToRemote()
 {
-    tar zcvf - -C ${SSH_SOURCE_DIR}/$1/userscripts . | ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
+    tar zcvf - -C ${WORK_DIR}/backups/$1/userscripts . | ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir -p ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/userscripts.tar.gz"
 
@@ -133,7 +133,7 @@ userscriptsTarToRemote()
 # $1 - daily or weekly
 dbTarToRemote()
 {
-    tar zcvf - -C ${SSH_SOURCE_DIR}/$1/db . | \
+    tar zcvf - -C ${WORK_DIR}/backups/$1/db . | \
         ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/db.tar.gz"
@@ -149,7 +149,7 @@ dbTarToRemote()
 
 controllersTarToRemote()
 {
-    tar zcvf - -C ${SSH_SOURCE_DIR}/$1/controllers . | \
+    tar zcvf - -C ${WORK_DIR}/backups/$1/controllers . | \
         ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/controllers.tar.gz"
@@ -165,7 +165,7 @@ controllersTarToRemote()
 
 mikrotikTarToRemote()
 {
-    tar zcvf - -C ${SSH_SOURCE_DIR}/$1/mikrotik . | \
+    tar zcvf - -C ${WORK_DIR}/backups/$1/mikrotik . | \
         ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/mikrotik.tar.gz"
@@ -179,12 +179,12 @@ mikrotikTarToRemote()
     fi
 }
 
-if [[ ! -d ${SSH_SOURCE_DIR}/daily ]]; then
-    mkdir -p ${SSH_SOURCE_DIR}/daily
+if [[ ! -d ${WORK_DIR}/backups/daily ]]; then
+    mkdir -p ${WORK_DIR}/backups/daily
 fi
 
-if [[ ! -d ${SSH_SOURCE_DIR}/weekly ]]; then
-    mkdir -p ${SSH_SOURCE_DIR}/weekly
+if [[ ! -d ${WORK_DIR}/backups/weekly ]]; then
+    mkdir -p ${WORK_DIR}/backups/weekly
 fi
 
 if [[ "${SSH_CLIENT_DIR:-unset}" == "unset" ]]; then
@@ -205,8 +205,8 @@ else
     controllersTarToRemote daily
     mikrotikTarToRemote daily
 
-    if [[ ! $(ls ${SSH_SOURCE_DIR}/weekly) ]] || [[ $(date +'%u') == 1 ]]; then
-        cp -r ${SSH_SOURCE_DIR}/daily/* ${SSH_SOURCE_DIR}/weekly
+    if [[ ! $(ls ${WORK_DIR}/backups/weekly) ]] || [[ $(date +'%u') == 1 ]]; then
+        cp -r ${WORK_DIR}/backups/daily/* ${WORK_DIR}/backups/weekly
         userscriptsTarToRemote weekly
         dbTarToRemote weekly
         controllersTarToRemote weekly
