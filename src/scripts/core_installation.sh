@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ ! -d ${WORK_DIR}/server ]]; then
+if [[ ! -d ${WORK_DIR}/server ]] || [[ -z $(ls -A ${WORK_DIR}/server) ]]; then
 
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
         ftp://${FTP_SERVER}/core-release-${1:-latest}.zip

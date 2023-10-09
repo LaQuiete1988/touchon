@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ ! -d ${WORK_DIR}/adm ]]; then
+if [[ ! -d ${WORK_DIR}/adm ]] || [[ -z $(ls -A ${WORK_DIR}/adm) ]]; then
 
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
         ftp://${FTP_SERVER}/adm-release-${1:-latest}.zip
