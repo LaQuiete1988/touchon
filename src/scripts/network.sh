@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-echo "sudo service networking restart" > ${WORK_DIR}/hostpipe
+echo "sudo service networking restart" > ${WORK_DIR}/.hostpipe
 
 for (( i=1; i <= 20; i++ ))
 do
 
-    echo "sudo systemctl is-active networking" > ${WORK_DIR}/hostpipe
+    echo "sudo systemctl is-active networking" > ${WORK_DIR}/.hostpipe
     sleep 0.5
 
-    if [[ $(cat ${WORK_DIR}/dockerpipe) == 'active' ]]; then
-        echo > ${WORK_DIR}/dockerpipe
+    if [[ $(cat ${WORK_DIR}/.dockerpipe) == 'active' ]]; then
+        echo > ${WORK_DIR}/.dockerpipe
         break
     fi
 

@@ -32,8 +32,8 @@ services:
       - backups:${WORK_DIR}/backups
       - ~/touchon/src/configs:${WORK_DIR}/configs
       - ~/touchon/src/scripts:${WORK_DIR}/scripts
-      - ~/.hostpipe:${WORK_DIR}/hostpipe
-      - ~/.dockerpipe:${WORK_DIR}/dockerpipe
+      - ~/.hostpipe:${WORK_DIR}/.hostpipe
+      - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
     network_mode: host
     devices:
