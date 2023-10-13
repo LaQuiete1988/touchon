@@ -21,7 +21,8 @@ services:
     build:
       context: ~/touchon/src/
       args:
-        UBUNTU_VERSION: focal
+        UBUNTU_VERSION: jammy
+        WORK_DIR: ${WORK_DIR}
       dockerfile: Dockerfile
     container_name: touchon
     restart: always

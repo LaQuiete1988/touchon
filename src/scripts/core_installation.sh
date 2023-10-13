@@ -2,10 +2,14 @@
 
 if [[ ! -d ${WORK_DIR}/server ]] || [[ -z $(ls -A ${WORK_DIR}/server) ]]; then
 
+if [[ $1 == 'develop' ]]; then
+    git clone ${GIT_CORE_REPO} -b develop ${WORK_DIR}/server
+else
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
         ftp://${FTP_SERVER}/core-release-${1:-latest}.zip
     unzip -q ${WORK_DIR}/core-release-${1:-latest}.zip -d ${WORK_DIR} >/dev/null 2>&1
     rm ${WORK_DIR}/core-release-${1:-latest}.zip
+fi
 
     sed -i "s/\$host =.*/\$host = getenv(\'MYSQL_HOST\');/g" ${WORK_DIR}/server/include.php
     sed -i "s/\$dbname =.*/\$dbname = getenv(\'MYSQL_DATABASE\');/g" ${WORK_DIR}/server/include.php

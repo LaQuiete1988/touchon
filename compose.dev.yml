@@ -5,6 +5,8 @@ services:
 
   # Touchon
   touchon:
+    env_file:
+      - ~/touchon/.env.dev
     build:
       # dockerfile: Dockerfile.dev
       args:
@@ -12,4 +14,4 @@ services:
     volumes:
       - ~/touchon/apps/adm:${WORK_DIR}/adm
       - ~/touchon/apps/server:${WORK_DIR}/server
-      - ~/.ssh:/root/.ssh
+      - /root/.ssh:/root/.ssh

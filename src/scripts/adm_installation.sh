@@ -2,15 +2,14 @@
 
 if [[ ! -d ${WORK_DIR}/adm ]] || [[ -z $(ls -A ${WORK_DIR}/adm) ]]; then
 
+if [[ $1 == 'develop' ]]; then
+    git clone ${GIT_ADM_REPO} -b develop ${WORK_DIR}/adm
+else
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} \
         ftp://${FTP_SERVER}/adm-release-${1:-latest}.zip
     unzip -q ${WORK_DIR}/adm-release-${1:-latest}.zip -d ${WORK_DIR} >/dev/null 2>&1
     rm ${WORK_DIR}/adm-release-${1:-latest}.zip
-
-# Очищаем БД
-    mysql -uroot -p${MYSQL_ROOT_PASSWORD} << EOF
-CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-EOF
+fi
 
 # Пишем нужные переменные в .env
     cat << EOF > ${WORK_DIR}/adm/.env
@@ -43,7 +42,7 @@ EOF
     php ${WORK_DIR}/adm/artisan key:generate --force
     php ${WORK_DIR}/adm/artisan migrate --seed --force
     php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD}
-    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER} ${ADM_PARTNER_PASSWORD}
+    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER:-touchon} ${ADM_PARTNER_PASSWORD:-touchon}
 
 # Добавляем симлинк на каталог пользовательских скриптов
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts
