@@ -17,6 +17,9 @@ if [[ -d ${WORK_DIR}/server ]]; then
     sed -i "s/\$dbpass =.*/\$dbpass = getenv(\'MYSQL_PASSWORD\');/g" ${WORK_DIR}/server/include.php
     sed -i 's/php -f thread.php/cd \".ROOT_DIR.\" \&\& php -f thread.php/' ${WORK_DIR}/server/classes/SendSocket.php
 
+    composer -n -d ${WORK_DIR}/server clearcache
+    composer -n -d ${WORK_DIR}/server require workerman/workerman
+
     php ${WORK_DIR}/server/server.php start -d
 
     if [[ -f ${WORK_DIR}/server/readme.md ]]; then
