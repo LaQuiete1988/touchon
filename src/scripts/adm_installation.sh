@@ -45,6 +45,7 @@ EOF
     php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER:-touchon} ${ADM_PARTNER_PASSWORD:-touchon}
 
 # Добавляем симлинк на каталог пользовательских скриптов
+    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
 
