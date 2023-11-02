@@ -19,6 +19,8 @@ if [[ -d ${WORK_DIR}/server ]]; then
 
     composer -n -d ${WORK_DIR}/server clearcache
     composer -n -d ${WORK_DIR}/server require workerman/workerman
+    composer -n -d ${WORK_DIR}/server require aldas/modbus-tcp-client
+    composer -n -d ${WORK_DIR}/server require davidpersson/beanstalk
 
     php ${WORK_DIR}/server/server.php start -d
 
