@@ -36,8 +36,6 @@ SESSION_LIFETIME=120
 QUEUE_DRIVER=sync
 EOF
 
-    
-
     composer -n -d ${WORK_DIR}/adm clearcache
     composer -n -d ${WORK_DIR}/adm install
 
