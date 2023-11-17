@@ -54,7 +54,8 @@ services:
       MTX_WEBRTC: no
       MTX_SRT: no
       MTX_PROTOCOLS: tcp
-      MTX_HLSENCRYPTION: false
+      # MTX_HLSENCRYPTION: false
+      MTX_HLSVARIANT: fmp4
     # volumes:
     #   - ./mediamtx/server.key:/server.key
     #   - ./mediamtx/server.crt:/server.crt
