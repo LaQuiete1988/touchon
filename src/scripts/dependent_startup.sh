@@ -39,7 +39,11 @@ sed -i 's,group =.*,group = root,' /etc/php/${phpVersion}/fpm/pool.d/www.conf
 supervisorctl start php-fpm
 [[ -L /run/php/php-fpm.sock ]] || ln -s /run/php/php${phpVersion}-fpm.sock /run/php/php-fpm.sock
 
-rm /etc/nginx/sites-enabled/*
+if [ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]; then
+   rm /etc/nginx/sites-enabled/*
+fi
+
+# rm /etc/nginx/sites-enabled/*
 envsubst "\$WORK_DIR" < ${WORK_DIR}/configs/nginx.conf.template > /etc/nginx/conf.d/touchon.conf
 supervisorctl start nginx
 
@@ -48,7 +52,11 @@ if [[ ! -f ${WORK_DIR}/adm/.env ]]; then
 fi
 
 chmod +x ${WORK_DIR}/scripts/* && chmod +x ${WORK_DIR}/scripts/rs_control/rs_control
-ln -s ${WORK_DIR}/scripts/rs_control/rs_control /usr/bin/rs_control
+[[ -L /usr/bin/rs_control ]] || ln -s ${WORK_DIR}/scripts/rs_control/rs_control /usr/bin/rs_control
+
+if [[ -f ${WORK_DIR}/server/server.php ]]; then
+    supervisorctl start socketserver
+fi
 
 crontab -r
 crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1'; } | crontab -
@@ -59,6 +67,6 @@ crontab -l | { cat; echo '*/30 * * * * cd ${WORK_DIR}/server && php cron.php 30'
 crontab -l | { cat; echo '*/60 * * * * cd ${WORK_DIR}/server && php cron.php 60'; } | crontab -
 crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php main.php'; } | crontab -
 crontab -l | { cat; echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh'; } | crontab -
-crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php'; } | crontab -
+# crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php'; } | crontab -
 
 mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
