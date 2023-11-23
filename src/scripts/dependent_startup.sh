@@ -43,7 +43,6 @@ if [ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]; then
    rm /etc/nginx/sites-enabled/*
 fi
 
-# rm /etc/nginx/sites-enabled/*
 envsubst "\$WORK_DIR" < ${WORK_DIR}/configs/nginx.conf.template > /etc/nginx/conf.d/touchon.conf
 supervisorctl start nginx
 
@@ -53,6 +52,18 @@ fi
 
 chmod +x ${WORK_DIR}/scripts/* && chmod +x ${WORK_DIR}/scripts/rs_control/rs_control
 [[ -L /usr/bin/rs_control ]] || ln -s ${WORK_DIR}/scripts/rs_control/rs_control /usr/bin/rs_control
+
+sed -i \
+    -e 's,api:.*,api: yes,g' \
+    -e 's,apiAddress:.*,apiAddress: :9997,g' \
+    -e 's,rtmp:.*,rtmp: no,g' \
+    -e 's,rtsp:.*,rtsp: no,g' \
+    -e 's,webrtc:.*,webrtc: no,g' \
+    -e 's,srt:.*,srt: no,g' \
+    -e 's,hlsVariant:.*,hlsVariant: fmp4,g' \
+    /opt/mediamtx/mediamtx.yml
+
+supervisorctl start mediamtx
 
 if [[ -f ${WORK_DIR}/server/server.php ]]; then
     supervisorctl start socketserver
@@ -67,6 +78,5 @@ crontab -l | { cat; echo '*/30 * * * * cd ${WORK_DIR}/server && php cron.php 30'
 crontab -l | { cat; echo '*/60 * * * * cd ${WORK_DIR}/server && php cron.php 60'; } | crontab -
 crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php main.php'; } | crontab -
 crontab -l | { cat; echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh'; } | crontab -
-# crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php'; } | crontab -
 
 mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql

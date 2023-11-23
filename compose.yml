@@ -41,26 +41,6 @@ services:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
       - "/dev/ttyUSB1:/dev/ttyUSB1"
 
-  # MediaMTX
-  mediamtx:
-    image: bluenviron/mediamtx:latest
-    container_name: mediamtx
-    restart: always
-    environment:
-      MTX_API: yes
-      MTX_APIADDRESS: :9997
-      MTX_RTMP: no
-      MTX_RTSP: no
-      MTX_WEBRTC: no
-      MTX_SRT: no
-      MTX_PROTOCOLS: tcp
-      # MTX_HLSENCRYPTION: false
-      MTX_HLSVARIANT: fmp4
-    # volumes:
-    #   - ./mediamtx/server.key:/server.key
-    #   - ./mediamtx/server.crt:/server.crt
-    network_mode: host
-
 volumes:
   mysql:
   server:
