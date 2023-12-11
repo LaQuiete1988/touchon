@@ -66,7 +66,7 @@ sed -i \
 supervisorctl start mediamtx
 
 if [[ -f ${WORK_DIR}/server/server.php ]]; then
-    cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-}
+    cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-} & >> /dev/null 2>&1
 fi
 
 crontab -r
