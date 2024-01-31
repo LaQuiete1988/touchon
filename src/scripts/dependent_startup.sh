@@ -61,13 +61,19 @@ sed -i \
     -e 's,webrtc:.*,webrtc: no,g' \
     -e 's,srt:.*,srt: no,g' \
     -e 's,hlsVariant:.*,hlsVariant: fmp4,g' \
+    -e 's,hlsAlwaysRemux:.*,hlsAlwaysRemux: true,g' \
+    -e 's,rtspTransport:.*,rtspTransport: tcp,g' \
     /opt/mediamtx/mediamtx.yml
 
 supervisorctl start mediamtx
 
+php ${WORK_DIR}/adm/artisan config:clear
+
 if [[ -f ${WORK_DIR}/server/server.php ]]; then
     cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-} & >> /dev/null 2>&1
 fi
+
+cd ${WORK_DIR}/server/scripts && php modbusctl.php start
 
 crontab -r
 crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1'; } | crontab -
