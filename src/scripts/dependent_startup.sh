@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
+source ${WORK_DIR}/scripts/add_env_variables.sh
 printenv > /etc/environment
+
+export MYSQL_ROOT_PASSWORD=$(openssl rand -base64 9)
+mariadbd-safe --skip-grant-tables --skip-networking &
+mysql -uroot << EOF
+FLUSH PRIVILEGES;
+SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MYSQL_ROOT_PASSWORD');
+EOF
+killall -v mariadbd
 
 supervisorctl start mysql
 
@@ -61,6 +70,7 @@ sed -i \
     -e 's,webrtc:.*,webrtc: no,g' \
     -e 's,srt:.*,srt: no,g' \
     -e 's,hlsVariant:.*,hlsVariant: fmp4,g' \
+    -e 's,hlsAlwaysRemux:.*,hlsAlwaysRemux: true,g' \
     /opt/mediamtx/mediamtx.yml
 
 supervisorctl start mediamtx
@@ -81,4 +91,4 @@ crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php'
 crontab -l | { cat; echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh'; } | crontab -
 crontab -l | { cat; echo '* * * * * cd ${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1'; } | crontab -
 
-mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
+mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_PASSWORD mysql

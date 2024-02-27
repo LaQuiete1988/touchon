@@ -36,6 +36,7 @@ services:
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
+      - /var/lib/sss/pipes:/var/lib/sss/pipes
     network_mode: host
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
