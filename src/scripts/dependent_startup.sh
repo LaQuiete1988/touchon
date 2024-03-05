@@ -73,7 +73,7 @@ if [[ -f ${WORK_DIR}/server/server.php ]]; then
     cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-} & >> /dev/null 2>&1
 fi
 
-cd ${WORK_DIR}/server/scripts && php modbusctl.php start
+# cd ${WORK_DIR}/server/scripts && php modbusctl.php start
 
 crontab -r
 crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1'; } | crontab -
