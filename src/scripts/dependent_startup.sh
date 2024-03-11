@@ -88,3 +88,8 @@ crontab -l | { cat; echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh'; } 
 crontab -l | { cat; echo '* * * * * cd ${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1'; } | crontab -
 
 mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
+
+supervisorctl start modbus1
+supervisorctl start modbus2
+supervisorctl start modbus1_polling
+supervisorctl start modbus2_polling
