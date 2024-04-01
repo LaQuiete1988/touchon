@@ -2,12 +2,12 @@
 
 printenv > /etc/environment
 
-supervisorctl start mysql
+# supervisorctl start mysql
 
-until [ -S "/run/mysqld/mysqld.sock" ]
-do
-    sleep 1
-done
+# until [ -S "/run/mysqld/mysqld.sock" ]
+# do
+#     sleep 1
+# done
 
 source ${WORK_DIR}/scripts/mysql_setup.sh
 
@@ -19,24 +19,24 @@ if [ -d /var/lib/mysql/$MYSQL_DATABASE ] ; then
     fi
 fi
 
-ln -snf /usr/share/zoneinfo/${timeZone:-Europe/Moscow} /etc/localtime && echo ${timeZone:-Europe/Moscow} > /etc/timezone
+ln -snf /usr/share/zoneinfo/Europe/Moscow /etc/localtime && echo Europe/Moscow > /etc/timezone
 
-TIMEZONE_CHECK=$(printf 'SELECT EXISTS (SELECT * FROM mysql.time_zone_name WHERE NAME LIKE "%s")' "${timeZone:-Europe/Moscow}")
-if [[ ! $(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -sse "$TIMEZONE_CHECK") ]]; then
-    mysql_tzinfo_to_sql /usr/share/zoneinfo/${timeZone:-Europe/Moscow} ${timeZone:-Europe/Moscow} | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
-fi
+# TIMEZONE_CHECK=$(printf 'SELECT EXISTS (SELECT * FROM mysql.time_zone_name WHERE NAME LIKE "%s")' "${timeZone:-Europe/Moscow}")
+# if [[ ! $(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -sse "$TIMEZONE_CHECK") ]]; then
+#     mysql_tzinfo_to_sql /usr/share/zoneinfo/${timeZone:-Europe/Moscow} ${timeZone:-Europe/Moscow} | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
+# fi
 
-mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql -sse "SET GLOBAL time_zone = '${timeZone:-Europe/Moscow}';"
+mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql -sse "SET GLOBAL time_zone = 'Europe/Moscow';"
 
 phpVersion=$(php -v | head -n 1 | awk '/PHP/ {print $2}' | cut -d. -f1,2)
-sed -i 's,.*date.timezone =.*,date.timezone = '"${timeZone:-Europe/Moscow}"',g' /etc/php/${phpVersion}/fpm/php.ini
-sed -i 's,.*date.timezone =.*,date.timezone = '"${timeZone:-Europe/Moscow}"',g' /etc/php/${phpVersion}/cli/php.ini
+sed -i 's,.*date.timezone =.*,date.timezone = 'Europe/Moscow',g' /etc/php/${phpVersion}/fpm/php.ini
+sed -i 's,.*date.timezone =.*,date.timezone = 'Europe/Moscow',g' /etc/php/${phpVersion}/cli/php.ini
 sed -i 's,;clear_env = no,clear_env = no,g' /etc/php/${phpVersion}/fpm/pool.d/www.conf
 sed -i 's,user =.*,user = root,' /etc/php/${phpVersion}/fpm/pool.d/www.conf
 sed -i 's,group =.*,group = root,' /etc/php/${phpVersion}/fpm/pool.d/www.conf
 
 [[ -L /usr/sbin/php-fpm ]] || ln -s /usr/sbin/php-fpm${phpVersion} /usr/sbin/php-fpm
-supervisorctl start php-fpm
+supervisorctl restart php-fpm
 [[ -L /run/php/php-fpm.sock ]] || ln -s /run/php/php${phpVersion}-fpm.sock /run/php/php-fpm.sock
 
 if [ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]; then
@@ -44,14 +44,14 @@ if [ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]; then
 fi
 
 envsubst "\$WORK_DIR" < ${WORK_DIR}/configs/nginx.conf.template > /etc/nginx/conf.d/touchon.conf
-supervisorctl start nginx
+supervisorctl restart nginx
 
-if [[ ! -f ${WORK_DIR}/adm/.env ]]; then
-    sed -i 's,APP_TIMEZONE=.*,APP_TIMEZONE='"${timeZone:-Europe/Moscow}"',g' ${WORK_DIR}/adm/.env
-fi
+# if [[ ! -f ${WORK_DIR}/adm/.env ]]; then
+#     sed -i 's,APP_TIMEZONE=.*,APP_TIMEZONE='"${timeZone:-Europe/Moscow}"',g' ${WORK_DIR}/adm/.env
+# fi
 
-chmod +x ${WORK_DIR}/scripts/* && chmod +x ${WORK_DIR}/scripts/rs_control/rs_control
-[[ -L /usr/bin/rs_control ]] || ln -s ${WORK_DIR}/scripts/rs_control/rs_control /usr/bin/rs_control
+# chmod +x ${WORK_DIR}/scripts/* && chmod +x ${WORK_DIR}/scripts/rs_control/rs_control
+# [[ -L /usr/bin/rs_control ]] || ln -s ${WORK_DIR}/scripts/rs_control/rs_control /usr/bin/rs_control
 
 sed -i \
     -e 's,api:.*,api: yes,g' \
@@ -65,13 +65,13 @@ sed -i \
     -e 's,rtspTransport:.*,rtspTransport: tcp,g' \
     /opt/mediamtx/mediamtx.yml
 
-supervisorctl start mediamtx
+supervisorctl restart mediamtx
 
-php ${WORK_DIR}/adm/artisan config:clear
+# php ${WORK_DIR}/adm/artisan config:clear
 
-if [[ -f ${WORK_DIR}/server/server.php ]]; then
-    cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-} & >> /dev/null 2>&1
-fi
+# if [[ -f ${WORK_DIR}/server/server.php ]]; then
+#     cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-} & >> /dev/null 2>&1
+# fi
 
 # cd ${WORK_DIR}/server/scripts && php modbusctl.php start
 
@@ -89,7 +89,7 @@ crontab -l | { cat; echo '* * * * * cd ${WORK_DIR}/adm && php artisan schedule:r
 
 mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
 
-supervisorctl start modbus1
-supervisorctl start modbus2
-supervisorctl start modbus1_polling
-supervisorctl start modbus2_polling
+# supervisorctl start modbus1
+# supervisorctl start modbus2
+# supervisorctl start modbus1_polling
+# supervisorctl start modbus2_polling

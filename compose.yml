@@ -28,11 +28,11 @@ services:
     restart: always
     volumes:
       - mysql:/var/lib/mysql
-      - adm:${WORK_DIR}/adm
-      - server:${WORK_DIR}/server 
+      # - adm:${WORK_DIR}/adm
+      # - server:${WORK_DIR}/server 
       - backups:${WORK_DIR}/backups
-      - ~/touchon/src/configs:${WORK_DIR}/configs
-      - ~/touchon/src/scripts:${WORK_DIR}/scripts
+      # - ~/touchon/src/configs:${WORK_DIR}/configs
+      # - ~/touchon/src/scripts:${WORK_DIR}/scripts
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
@@ -43,6 +43,6 @@ services:
 
 volumes:
   mysql:
-  server:
-  adm:
+  # server:
+  # adm:
   backups:

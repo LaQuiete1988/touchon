@@ -25,4 +25,7 @@ RUN apt-get update \
     && chown -R mysql:mysql /run/mysqld \
     && echo "export SERVER_LOCAL_IP=\$(ip -4 addr show dev eth0 | grep eth0:1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')" >> ~/.bashrc
 
+COPY ./configs configs
+COPY --chmod=0775 ./scripts scripts
+
 CMD /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
