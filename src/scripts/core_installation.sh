@@ -22,7 +22,7 @@ fi
     composer -n -d ${WORK_DIR}/server require aldas/modbus-tcp-client
     composer -n -d ${WORK_DIR}/server require davidpersson/beanstalk
 
-    php ${WORK_DIR}/server/server.php start -d ${SERVER_OPTIONS}
+    cd ${WORK_DIR}/server/ && php server.php start -d ${SERVER_OPTIONS} && cd -
     # supervisorctl start socketserver
 
     if [[ -f ${WORK_DIR}/server/readme.md ]]; then

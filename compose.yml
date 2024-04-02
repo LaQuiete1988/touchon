@@ -26,23 +26,29 @@ services:
       dockerfile: Dockerfile
     container_name: touchon
     restart: always
-    volumes:
-      - mysql:/var/lib/mysql
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+# cap_drop:
+#   - NET_ADMIN
+#   - SYS_ADMIN
+    # volumes:
+      # - mysql:/var/lib/mysql
       # - adm:${WORK_DIR}/adm
       # - server:${WORK_DIR}/server 
-      - backups:${WORK_DIR}/backups
+      # - backups:${WORK_DIR}/backups
       # - ~/touchon/src/configs:${WORK_DIR}/configs
       # - ~/touchon/src/scripts:${WORK_DIR}/scripts
-      - ~/.hostpipe:${WORK_DIR}/.hostpipe
-      - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
-      - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
+      # - ~/.hostpipe:${WORK_DIR}/.hostpipe
+      # - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
+      # - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
     network_mode: host
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
-      - "/dev/ttyUSB1:/dev/ttyUSB1"
+    # devices:
+    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
+    #   - "/dev/ttyUSB1:/dev/ttyUSB1"
 
-volumes:
-  mysql:
+# volumes:
+  # mysql:
   # server:
   # adm:
-  backups:
+  # backups:

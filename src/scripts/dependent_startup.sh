@@ -11,6 +11,8 @@ printenv > /etc/environment
 
 source ${WORK_DIR}/scripts/mysql_setup.sh
 
+mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
+
 if [ -d /var/lib/mysql/$MYSQL_DATABASE ] ; then 
     if [[ $(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -sse "SHOW TABLES LIKE 'settings'" $MYSQL_DATABASE) ]]; then
         if [[ $(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -sse "SELECT EXISTS (SELECT 1 FROM settings)" $MYSQL_DATABASE) ]]; then
@@ -87,9 +89,60 @@ crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php'
 crontab -l | { cat; echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh'; } | crontab -
 crontab -l | { cat; echo '* * * * * cd ${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1'; } | crontab -
 
-mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
+source ${WORK_DIR}/scripts/adm_installation.sh 1.16
+source ${WORK_DIR}/scripts/core_installation.sh 1.13
 
-# supervisorctl start modbus1
-# supervisorctl start modbus2
-# supervisorctl start modbus1_polling
-# supervisorctl start modbus2_polling
+mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} << EOF
+INSERT INTO smarthome.modbus_buses (device, type, baudrate, length, parity, stopbits) 
+VALUES ('/dev/ttyUSB0', 'rtu', 9600, 8, 'none', 1);
+INSERT INTO smarthome.modbus_buses (device, type, baudrate, length, parity, stopbits) 
+VALUES ('/dev/ttyUSB1', 'rtu', 9600, 8, 'none', 1);
+EOF
+
+mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} << EOF
+DELETE FROM smarthome.modbus_slavers_types WHERE type NOT IN ('wb-led','ecodim-dali-gw2');
+EOF
+
+cat << EOT >> ${WORK_DIR}/configs/supervisord.conf
+[program:modbus1]
+command = php modbus_queue.php 1 -DFOREGROUND
+directory = %(ENV_WORK_DIR)s/server/scripts
+autostart = true
+autorestart = unexpected
+exitcodes = 6
+stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus1.err.log
+stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus1.out.log
+
+[program:modbus2]
+command = php modbus_queue.php 2 -DFOREGROUND
+directory = %(ENV_WORK_DIR)s/server/scripts
+autostart = true
+autorestart = unexpected
+exitcodes = 6
+stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus2.err.log
+stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus2.out.log
+
+[program:modbus1_polling]
+command = php modbus_polling_loop.php 1 -DFOREGROUND
+directory = %(ENV_WORK_DIR)s/server/scripts
+autostart = true
+autorestart = unexpected
+exitcodes = 6
+stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus1_polling.err.log
+stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus1_polling.out.log
+
+[program:modbus2_polling]
+command = php modbus_polling_loop.php 2 -DFOREGROUND
+directory = %(ENV_WORK_DIR)s/server/scripts
+autostart = true
+autorestart = unexpected
+exitcodes = 6
+stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus2_polling.err.log
+stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus2_polling.out.log
+EOT
+
+rm -rf ${WORK_DIR}/scripts/rs_control
+rm -f ${WORK_DIR}/scripts/adm_*
+rm -f ${WORK_DIR}/scripts/core_*
+rm -f ${WORK_DIR}/scripts/touchon/src/scripts/dependent_startup.sh
+rm -f ${WORK_DIR}/configs/nginx.conf.template
