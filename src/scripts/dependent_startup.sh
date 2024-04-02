@@ -4,10 +4,10 @@ printenv > /etc/environment
 
 # supervisorctl start mysql
 
-# until [ -S "/run/mysqld/mysqld.sock" ]
-# do
-#     sleep 1
-# done
+until [ -S "/run/mysqld/mysqld.sock" ]
+do
+    sleep 1
+done
 
 source ${WORK_DIR}/scripts/mysql_setup.sh
 
