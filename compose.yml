@@ -15,7 +15,7 @@ services:
   # Touchon
   touchon:
     env_file:
-      - ~/touchon/.env
+      - ./.env
     image: 178.57.106.190:5000/touchon:1.0-jethome
     container_name: touchon
     restart: always
