@@ -29,4 +29,10 @@ RUN apt-get update \
 COPY ./configs configs
 COPY --chmod=0775 ./scripts scripts
 
+RUN apt-get install -y --no-install-recommends --no-install-suggests avahi-utils network-manager
+    #sed -i 's/.*enable-dbus=.*/enable-dbus=yes/' /etc/avahi/avahi-daemon.conf &&\
+    #sed -i 's/.*host-name=.*/host-name=mydev/' /etc/avahi/avahi-daemon.conf &&\
+    #sed -i 's/.*use-ipv6=.*/use-ipv6=no/' /etc/avahi/avahi-daemon.conf &&\
+    #sed -i 's/.*allow-interfaces=.*/allow-interfaces=eth0/' /etc/avahi/avahi-daemon.conf
+
 CMD /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
