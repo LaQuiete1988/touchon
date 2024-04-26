@@ -9,7 +9,7 @@ do
     sleep 1
 done
 
-source ${WORK_DIR}/scripts/mysql_setup.sh
+source ./mysql_setup.sh
 
 mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
 
@@ -22,11 +22,6 @@ if [ -d /var/lib/mysql/$MYSQL_DATABASE ] ; then
 fi
 
 ln -snf /usr/share/zoneinfo/Europe/Moscow /etc/localtime && echo Europe/Moscow > /etc/timezone
-
-# TIMEZONE_CHECK=$(printf 'SELECT EXISTS (SELECT * FROM mysql.time_zone_name WHERE NAME LIKE "%s")' "${timeZone:-Europe/Moscow}")
-# if [[ ! $(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -sse "$TIMEZONE_CHECK") ]]; then
-#     mysql_tzinfo_to_sql /usr/share/zoneinfo/${timeZone:-Europe/Moscow} ${timeZone:-Europe/Moscow} | mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql
-# fi
 
 mysql -u$MYSQL_USER -p$MYSQL_ROOT_PASSWORD mysql -sse "SET GLOBAL time_zone = 'Europe/Moscow';"
 
@@ -45,15 +40,8 @@ if [ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]; then
    rm /etc/nginx/sites-enabled/*
 fi
 
-envsubst "\$WORK_DIR" < ${WORK_DIR}/configs/nginx.conf.template > /etc/nginx/conf.d/touchon.conf
+envsubst "\$WORK_DIR" < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf
 supervisorctl restart nginx
-
-# if [[ ! -f ${WORK_DIR}/adm/.env ]]; then
-#     sed -i 's,APP_TIMEZONE=.*,APP_TIMEZONE='"${timeZone:-Europe/Moscow}"',g' ${WORK_DIR}/adm/.env
-# fi
-
-# chmod +x ${WORK_DIR}/scripts/* && chmod +x ${WORK_DIR}/scripts/rs_control/rs_control
-# [[ -L /usr/bin/rs_control ]] || ln -s ${WORK_DIR}/scripts/rs_control/rs_control /usr/bin/rs_control
 
 sed -i \
     -e 's,api:.*,api: yes,g' \
@@ -69,13 +57,9 @@ sed -i \
 
 supervisorctl restart mediamtx
 
-# php ${WORK_DIR}/adm/artisan config:clear
-
-# if [[ -f ${WORK_DIR}/server/server.php ]]; then
-#     cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-} & >> /dev/null 2>&1
-# fi
-
-# cd ${WORK_DIR}/server/scripts && php modbusctl.php start
+if [[ -f ${WORK_DIR}/server/server.php ]]; then
+    cd ${WORK_DIR}/server && php server.php start ${SERVER_OPTIONS:-} & >> /dev/null 2>&1
+fi
 
 crontab -r
 crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1'; } | crontab -
@@ -89,60 +73,9 @@ crontab -l | { cat; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php'
 crontab -l | { cat; echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh'; } | crontab -
 crontab -l | { cat; echo '* * * * * cd ${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1'; } | crontab -
 
-source ${WORK_DIR}/scripts/adm_installation.sh 1.16
-source ${WORK_DIR}/scripts/core_installation.sh 1.13
+source ./adm_installation.sh develop
+source ./core_installation.sh develop
 
-mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} << EOF
-INSERT INTO smarthome.modbus_buses (device, type, baudrate, length, parity, stopbits) 
-VALUES ('/dev/ttyUSB0', 'rtu', 9600, 8, 'none', 1);
-INSERT INTO smarthome.modbus_buses (device, type, baudrate, length, parity, stopbits) 
-VALUES ('/dev/ttyUSB1', 'rtu', 9600, 8, 'none', 1);
-EOF
-
-mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} << EOF
-DELETE FROM smarthome.modbus_slavers_types WHERE type NOT IN ('wb-led','ecodim-dali-gw2');
-EOF
-
-cat << EOT >> ${WORK_DIR}/configs/supervisord.conf
-[program:modbus1]
-command = php modbus_queue.php 1 -DFOREGROUND
-directory = %(ENV_WORK_DIR)s/server/scripts
-autostart = true
-autorestart = unexpected
-exitcodes = 6
-stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus1.err.log
-stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus1.out.log
-
-[program:modbus2]
-command = php modbus_queue.php 2 -DFOREGROUND
-directory = %(ENV_WORK_DIR)s/server/scripts
-autostart = true
-autorestart = unexpected
-exitcodes = 6
-stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus2.err.log
-stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus2.out.log
-
-[program:modbus1_polling]
-command = php modbus_polling_loop.php 1 -DFOREGROUND
-directory = %(ENV_WORK_DIR)s/server/scripts
-autostart = true
-autorestart = unexpected
-exitcodes = 6
-stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus1_polling.err.log
-stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus1_polling.out.log
-
-[program:modbus2_polling]
-command = php modbus_polling_loop.php 2 -DFOREGROUND
-directory = %(ENV_WORK_DIR)s/server/scripts
-autostart = true
-autorestart = unexpected
-exitcodes = 6
-stderr_logfile = %(ENV_WORK_DIR)s/logs/modbus2_polling.err.log
-stdout_logfile = %(ENV_WORK_DIR)s/logs/modbus2_polling.out.log
-EOT
-
-rm -rf ${WORK_DIR}/scripts/rs_control
-rm -f ${WORK_DIR}/scripts/adm_*
-rm -f ${WORK_DIR}/scripts/core_*
-rm -f ${WORK_DIR}/scripts/touchon/src/scripts/dependent_startup.sh
-rm -f ${WORK_DIR}/configs/nginx.conf.template
+# mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} << EOF
+# DELETE FROM smarthome.modbus_slavers_types WHERE type NOT IN ('wb-led','ecodim-dali-gw2');
+# EOF

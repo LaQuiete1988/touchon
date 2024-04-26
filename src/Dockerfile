@@ -23,7 +23,6 @@ RUN apt-get update \
     && mkdir -p /var/log/supervisor \
     && mkdir -p /run/mysqld \
     && chown -R mysql:mysql /run/mysqld \
-    # && echo "export SERVER_LOCAL_IP=\$(ip -4 addr show dev eth0 | grep eth0:1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')" >> ~/.bashrc \
     && mkdir ${WORK_DIR}/logs
 
 COPY ./configs configs
