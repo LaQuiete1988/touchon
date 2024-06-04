@@ -1,6 +1,4 @@
-ARG UBUNTU_VERSION
-
-FROM ubuntu:${UBUNTU_VERSION}
+FROM ubuntu:22.04
 
 ARG WORK_DIR
 ARG EXTRA_PACKAGES
@@ -43,31 +41,7 @@ RUN apt-get update && \
         -e 's,group =.*,group = root,' \
         /etc/php/8.1/fpm/pool.d/www.conf && \
     [[ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]] || rm /etc/nginx/sites-enabled/*
-    # echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1' >> /etc/cron.d/touchon && \
-    # echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1' >> /etc/cron.d/touchon && \
-    # echo '*/5 * * * * cd ${WORK_DIR}/server && php cron.php 5' >> /etc/cron.d/touchon && \
-    # echo '*/10 * * * * cd ${WORK_DIR}/server && php cron.php 10' >> /etc/cron.d/touchon && \
-    # echo '*/15 * * * * cd ${WORK_DIR}/server && php cron.php 15' >> /etc/cron.d/touchon && \
-    # echo '*/30 * * * * cd ${WORK_DIR}/server && php cron.php 30' >> /etc/cron.d/touchon && \
-    # echo '*/60 * * * * cd ${WORK_DIR}/server && php cron.php 60' >> /etc/cron.d/touchon && \
-    # echo '*/1 * * * * cd ${WORK_DIR}/server && php main.php' >> /etc/cron.d/touchon && \
-    # echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php' >> /etc/cron.d/touchon && \
-    # echo '@reboot cd ${WORK_DIR}/server && php watchdog.php' >> /etc/cron.d/touchon && \
-    # echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh' >> /etc/cron.d/touchon && \
-    # echo '* * * * * cd ${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1' >> /etc/cron.d/touchon && \
-    # echo '*/1 * * * * cd ${WORK_DIR} && touch file.txt' >> /etc/cron.d/touchon
-    # (crontab -l ; echo '*/1 * * * * cd ${WORK_DIR}/server && php cron.php 1') | crontab && \
-    # (crontab -l ; echo '*/5 * * * * cd ${WORK_DIR}/server && php cron.php 5') | crontab && \
-    # (crontab -l ; echo '*/10 * * * * cd ${WORK_DIR}/server && php cron.php 10') | crontab && \
-    # (crontab -l ; echo '*/15 * * * * cd ${WORK_DIR}/server && php cron.php 15') | crontab && \
-    # (crontab -l ; echo '*/30 * * * * cd ${WORK_DIR}/server && php cron.php 30')| crontab && \
-    # (crontab -l ; echo '*/60 * * * * cd ${WORK_DIR}/server && php cron.php 60') | crontab && \
-    # (crontab -l ; echo '*/1 * * * * cd ${WORK_DIR}/server && php main.php') | crontab && \
-    # (crontab -l ; echo '*/1 * * * * cd ${WORK_DIR}/server && php watchdog.php') | crontab && \
-    # (crontab -l ; echo '@reboot cd ${WORK_DIR}/server && php watchdog.php') | crontab && \
-    # (crontab -l ; echo '00 01 * * * cd ${WORK_DIR}/scripts && ./backup.sh') | crontab && \
-    # (crontab -l ; echo '* * * * * cd ${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1') | crontab && \
-    # (crontab -l ; echo "*/1 * * * * cd ${WORK_DIR} && touch file.txt") | crontab
+
     RUN (crontab -l ; echo "\
 */1 * * * * cd \${WORK_DIR}/server && php cron.php 1\n\
 */5 * * * * cd \${WORK_DIR}/server && php cron.php 5\n\
@@ -82,10 +56,10 @@ RUN apt-get update && \
 * * * * * cd \${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1\
 ") | crontab
 
-COPY ./configs configs
-COPY --chmod=0775 ./scripts scripts
-COPY ./temp .temp
+COPY ./configs ${WORK_DIR}/configs
+COPY --chmod=0775 ./scripts ${WORK_DIR}/scripts
+COPY ./temp ${WORK_DIR}/.temp
 
 RUN envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf
 
-CMD /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
+CMD printenv > /etc/environment  && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf

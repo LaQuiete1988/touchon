@@ -35,7 +35,6 @@ services:
     build:
       context: ~/touchon/src/
       args:
-        UBUNTU_VERSION: jammy
         WORK_DIR: ${WORK_DIR}
         EXTRA_PACKAGES: "git ca-certificates"
       dockerfile: Dockerfile

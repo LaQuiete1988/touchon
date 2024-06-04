@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-printenv > /etc/environment
+# printenv > /etc/environment
 
 # supervisorctl start mysql
 
