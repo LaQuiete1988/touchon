@@ -3,6 +3,12 @@ FROM ubuntu:22.04
 ARG WORK_DIR
 ARG EXTRA_PACKAGES
 ARG DEBIAN_FRONTEND=noninteractive
+ARG FTP_USER
+ARG FTP_PASSWORD
+ARG FTP_SERVER
+ARG ADM_VER=1.16
+ARG CORE_VER=1.13
+
 ENV LANG=en_GB.UTF-8
 ENV LANGUAGE=en_GB.UTF-8
 ENV LC_ALL=en_GB.UTF-8
@@ -60,6 +66,49 @@ COPY ./configs ${WORK_DIR}/configs
 COPY --chmod=0775 ./scripts ${WORK_DIR}/scripts
 COPY ./temp ${WORK_DIR}/.temp
 
-RUN envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf
+RUN envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf && \
+    rm -rf ${WORK_DIR}/.temp
 
-CMD printenv > /etc/environment  && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
+RUN wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/adm-release-${ADM_VER}.zip && \
+    unzip -q ${WORK_DIR}/adm-release-${ADM_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
+    rm ${WORK_DIR}/adm-release-${ADM_VER}.zip && \
+    echo '\
+APP_NAME="TouchON Admin Panel"\n\
+APP_ENV=production\n\
+APP_KEY=\n\
+APP_DEBUG=true\n\
+APP_LOG_LEVEL=debug\n\
+APP_URL=${SERVER_LOCAL_IP}\n\
+APP_TIMEZONE=Europe/Moscow\n\
+DEBUGBAR_ENABLED=false\n\
+SERVER_FOLDER=${WORK_DIR}/server\n\
+IMAGES_BASE_URI=${IMG_MNG_HOST}\n\
+DB_CONNECTION=mysql\n\
+DB_HOST=${MYSQL_HOST}\n\
+DB_PORT=${MYSQL_PORT}\n\
+DB_DATABASE=${MYSQL_DATABASE}\n\
+DB_USERNAME=${MYSQL_USER}\n\
+DB_PASSWORD=${MYSQL_PASSWORD}\n\
+BROADCAST_DRIVER=log\n\
+CACHE_DRIVER=file\n\
+SESSION_DRIVER=file\n\
+SESSION_LIFETIME=120\n\
+QUEUE_DRIVER=sync' >> ${WORK_DIR}/adm/.env && \
+    composer -n -d ${WORK_DIR}/adm clearcache && \
+    composer -n -d ${WORK_DIR}/adm install && \
+    php ${WORK_DIR}/adm/artisan config:clear && \
+    php ${WORK_DIR}/adm/artisan key:generate --force && \
+    php ${WORK_DIR}/adm/artisan migrate --seed --force && \
+    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD} && \
+    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER:-touchon} ${ADM_PARTNER_PASSWORD:-touchon} && \
+    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
+    [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
+    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
+
+RUN wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
+    unzip -q ${WORK_DIR}/core-release-${CORE_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
+    rm ${WORK_DIR}/core-release-${CORE_VER}.zip && \
+    composer -n -d ${WORK_DIR}/server clearcache && \
+    composer -n -d ${WORK_DIR}/server require workerman/workerman aldas/modbus-tcp-client davidpersson/beanstalk
+
+CMD printenv > /etc/environment && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf

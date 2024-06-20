@@ -19,11 +19,8 @@ services:
     image: mariadb:10.7
     container_name: mysql
     restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: Alli80ed!
-      MYSQL_DATABASE: smarthome
-      MYSQL_USER: smarthome
-      MYSQL_PASSWORD: Alli80ed!
+    env_file:
+      - ./.env
     network_mode: host
     volumes:
       - mysql:/var/lib/mysql
@@ -31,17 +28,19 @@ services:
   # Touchon
   touchon:
     env_file:
-      - ~/touchon/.env
+      - ./.env
     build:
       context: ~/touchon/src/
       args:
         WORK_DIR: ${WORK_DIR}
         EXTRA_PACKAGES: "git ca-certificates"
+        FTP_USER: ${FTP_USER}
+        FTP_PASSWORD: ${FTP_PASSWORD}
+        FTP_SERVER: ${FTP_SERVER}
       dockerfile: Dockerfile
     container_name: touchon
     restart: always
     volumes:
-      # - mysql:/var/lib/mysql
       # - ./userscripts:${WORK_DIR}/server/userscripts
       - ./backups:${WORK_DIR}/backups
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
