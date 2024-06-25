@@ -28,6 +28,8 @@ services:
     image: 178.57.106.190:5000/touchon:1.1-jethome
     container_name: touchon
     restart: always
+    depends_on:
+      - mysql
     volumes:
       - ./userscripts:${WORK_DIR}/server/userscripts
       - ./backups:${WORK_DIR}/backups
