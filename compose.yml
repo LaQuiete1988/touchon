@@ -25,14 +25,6 @@ services:
     volumes:
       - mysql:/var/lib/mysql
 
-  mqtt:
-    image: eclipse-mosquitto
-    container_name: mqtt
-    restart: always
-    network_mode: host
-    volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-  
   # Touchon
   touchon:
     env_file:
@@ -54,7 +46,6 @@ services:
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
-      # - ./src/temp:${WORK_DIR}/.temp
       - /root/.ssh:/root/.ssh
       - ./adm:${WORK_DIR}/adm
       - ./server:${WORK_DIR}/server
