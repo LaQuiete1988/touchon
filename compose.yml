@@ -33,32 +33,13 @@ services:
       context: ./src/
       args:
         WORK_DIR: ${WORK_DIR}
-        # EXTRA_PACKAGES: "git ca-certificates"
         FTP_USER: ${FTP_USER}
         FTP_PASSWORD: ${FTP_PASSWORD}
         FTP_SERVER: ${FTP_SERVER}
       dockerfile: Dockerfile
     container_name: touchon
     restart: always
-    # volumes:
-      # - ./userscripts:${WORK_DIR}/server/userscripts
-      # - ./backups:${WORK_DIR}/backups
-      # - ~/.hostpipe:${WORK_DIR}/.hostpipe
-      # - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
-      # - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
-      # - /root/.ssh:/root/.ssh
-      # - ./adm:${WORK_DIR}/adm
-      # - ./server:${WORK_DIR}/server
     network_mode: host
-    # devices:
-      # - "/dev/ttyUSB0:/dev/ttyUSB0"
-      # - "/dev/ttyUSB1:/dev/ttyUSB1"
-    command: >
-      bash -c "php ${WORK_DIR}/adm/artisan migrate --seed --force && 
-      php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD} &&
-      php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER} ${ADM_PARTNER_PASSWORD} &&
-      printenv > /etc/environment && 
-      /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf"
 
 volumes:
   mysql:

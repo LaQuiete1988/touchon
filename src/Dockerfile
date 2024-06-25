@@ -8,21 +8,16 @@ ARG FTP_PASSWORD
 ARG FTP_SERVER
 ARG ADM_VER=1.17
 ARG CORE_VER=1.14
-# ARG ADM_SUPERADMIN_USER
-# ARG ADM_SUPERADMIN_PASSWORD
-# ARG ADM_PARTNER_USER
-# ARG ADM_PARTNER_PASSWORD
-# ARG MYSQL_HOST
-# ARG MYSQL_PORT
-# ARG MYSQL_DATABASE
-# ARG MYSQL_USER
-# ARG MYSQL_PASSWORD
 
 ENV LANG=en_GB.UTF-8
 ENV LANGUAGE=en_GB.UTF-8
 ENV LC_ALL=en_GB.UTF-8
 
 WORKDIR ${WORK_DIR}
+
+COPY ./configs ${WORK_DIR}/configs
+COPY --chmod=0775 ./scripts ${WORK_DIR}/scripts
+COPY ./temp ${WORK_DIR}/.temp
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests locales locales-all && \
@@ -55,9 +50,9 @@ RUN apt-get update && \
         -e 's,user =.*,user = root,' \
         -e 's,group =.*,group = root,' \
         /etc/php/8.1/fpm/pool.d/www.conf && \
-    [[ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]] || rm /etc/nginx/sites-enabled/*
+    [[ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]] || rm /etc/nginx/sites-enabled/* && \
 
-    RUN (crontab -l ; echo "\
+    (crontab -l ; echo "\
 */1 * * * * cd \${WORK_DIR}/server && php cron.php 1\n\
 */5 * * * * cd \${WORK_DIR}/server && php cron.php 5\n\
 */10 * * * * cd \${WORK_DIR}/server && php cron.php 10\n\
@@ -69,16 +64,12 @@ RUN apt-get update && \
 @reboot cd \${WORK_DIR}/server && php watchdog.php\n\
 00 01 * * * cd \${WORK_DIR}/scripts && ./backup.sh\n\
 * * * * * cd \${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1\
-") | crontab
+") | crontab && \
 
-COPY ./configs ${WORK_DIR}/configs
-COPY --chmod=0775 ./scripts ${WORK_DIR}/scripts
-COPY ./temp ${WORK_DIR}/.temp
+    envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf && \
+    rm -rf ${WORK_DIR}/.temp && \
 
-RUN envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf && \
-    rm -rf ${WORK_DIR}/.temp
-
-RUN wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/adm-release-${ADM_VER}.zip && \
+    wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/adm-release-${ADM_VER}.zip && \
     unzip -q ${WORK_DIR}/adm-release-${ADM_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/adm-release-${ADM_VER}.zip && \
     echo '\
@@ -106,17 +97,14 @@ QUEUE_DRIVER=sync' >> ${WORK_DIR}/adm/.env && \
     composer -n -d ${WORK_DIR}/adm install && \
     php ${WORK_DIR}/adm/artisan config:clear && \
     php ${WORK_DIR}/adm/artisan key:generate --force && \
-    # php ${WORK_DIR}/adm/artisan migrate --seed --force && \
-    # php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD} && \
-    # php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER:-touchon} ${ADM_PARTNER_PASSWORD:-touchon} && \
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
-    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
+    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts && \
 
-RUN wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
+    wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
     unzip -q ${WORK_DIR}/core-release-${CORE_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/core-release-${CORE_VER}.zip && \
     composer -n -d ${WORK_DIR}/server clearcache && \
     composer -n -d ${WORK_DIR}/server require workerman/workerman aldas/modbus-tcp-client davidpersson/beanstalk
 
-# CMD printenv > /etc/environment && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
+CMD printenv > /etc/environment && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
