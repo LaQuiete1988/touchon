@@ -51,7 +51,6 @@ RUN apt-get update && \
         -e 's,group =.*,group = root,' \
         /etc/php/8.1/fpm/pool.d/www.conf && \
     [[ ! -z "$(ls -A /etc/nginx/sites-enabled)" ]] || rm /etc/nginx/sites-enabled/* && \
-
     (crontab -l ; echo "\
 */1 * * * * cd \${WORK_DIR}/server && php cron.php 1\n\
 */5 * * * * cd \${WORK_DIR}/server && php cron.php 5\n\
@@ -65,10 +64,8 @@ RUN apt-get update && \
 00 01 * * * cd \${WORK_DIR}/scripts && ./backup.sh\n\
 * * * * * cd \${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1\
 ") | crontab && \
-
     envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf && \
     rm -rf ${WORK_DIR}/.temp && \
-
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/adm-release-${ADM_VER}.zip && \
     unzip -q ${WORK_DIR}/adm-release-${ADM_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/adm-release-${ADM_VER}.zip && \
@@ -100,7 +97,6 @@ QUEUE_DRIVER=sync' >> ${WORK_DIR}/adm/.env && \
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts && \
-
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
     unzip -q ${WORK_DIR}/core-release-${CORE_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/core-release-${CORE_VER}.zip && \

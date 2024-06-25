@@ -39,6 +39,8 @@ services:
       dockerfile: Dockerfile
     container_name: touchon
     restart: always
+    depends_on: 
+      - mysql
     network_mode: host
 
 volumes:
