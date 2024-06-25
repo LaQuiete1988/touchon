@@ -1,7 +1,4 @@
-# Services
 services:
-
-# PhpMyAdmin Service
   phpmyadmin:
     image: phpmyadmin:5.2
     container_name: phpmyadmin
@@ -12,15 +9,25 @@ services:
       APACHE_PORT: 7000
     network_mode: host
 
-  # Touchon
+  mysql:
+    image: mariadb:10.7
+    container_name: mysql
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_HOST: 127.0.0.1
+    network_mode: host
+    volumes:
+      - mysql:/var/lib/mysql
+
   touchon:
     env_file:
       - ./.env
-    image: 178.57.106.190:5000/touchon:1.0-jethome
+    image: 178.57.106.190:5000/touchon:1.1-jethome
     container_name: touchon
     restart: always
     volumes:
-      - mysql:/var/lib/mysql
       - ./userscripts:${WORK_DIR}/server/userscripts
       - ./backups:${WORK_DIR}/backups
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
