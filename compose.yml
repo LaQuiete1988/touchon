@@ -17,6 +17,7 @@ services:
       - ./.env
     environment:
       MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
     network_mode: host
     volumes:
       - mysql:/var/lib/mysql
