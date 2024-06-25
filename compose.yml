@@ -53,6 +53,12 @@ services:
     # devices:
       # - "/dev/ttyUSB0:/dev/ttyUSB0"
       # - "/dev/ttyUSB1:/dev/ttyUSB1"
+    command: >
+      bash -c "php ${WORK_DIR}/adm/artisan migrate --seed --force && 
+      php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD} &&
+      php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER} ${ADM_PARTNER_PASSWORD} &&
+      printenv > /etc/environment && 
+      /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf"
 
 volumes:
   mysql:

@@ -8,6 +8,15 @@ ARG FTP_PASSWORD
 ARG FTP_SERVER
 ARG ADM_VER=1.17
 ARG CORE_VER=1.14
+# ARG ADM_SUPERADMIN_USER
+# ARG ADM_SUPERADMIN_PASSWORD
+# ARG ADM_PARTNER_USER
+# ARG ADM_PARTNER_PASSWORD
+# ARG MYSQL_HOST
+# ARG MYSQL_PORT
+# ARG MYSQL_DATABASE
+# ARG MYSQL_USER
+# ARG MYSQL_PASSWORD
 
 ENV LANG=en_GB.UTF-8
 ENV LANGUAGE=en_GB.UTF-8
@@ -78,7 +87,6 @@ APP_ENV=production\n\
 APP_KEY=\n\
 APP_DEBUG=true\n\
 APP_LOG_LEVEL=debug\n\
-APP_URL=${SERVER_LOCAL_IP}\n\
 APP_TIMEZONE=Europe/Moscow\n\
 DEBUGBAR_ENABLED=false\n\
 SERVER_FOLDER=${WORK_DIR}/server\n\
@@ -98,9 +106,9 @@ QUEUE_DRIVER=sync' >> ${WORK_DIR}/adm/.env && \
     composer -n -d ${WORK_DIR}/adm install && \
     php ${WORK_DIR}/adm/artisan config:clear && \
     php ${WORK_DIR}/adm/artisan key:generate --force && \
-    php ${WORK_DIR}/adm/artisan migrate --seed --force && \
-    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD} && \
-    php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER:-touchon} ${ADM_PARTNER_PASSWORD:-touchon} && \
+    # php ${WORK_DIR}/adm/artisan migrate --seed --force && \
+    # php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_SUPERADMIN_USER} ${ADM_SUPERADMIN_PASSWORD} && \
+    # php ${WORK_DIR}/adm/artisan create:user superadmin ${ADM_PARTNER_USER:-touchon} ${ADM_PARTNER_PASSWORD:-touchon} && \
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts
@@ -111,4 +119,4 @@ RUN wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp
     composer -n -d ${WORK_DIR}/server clearcache && \
     composer -n -d ${WORK_DIR}/server require workerman/workerman aldas/modbus-tcp-client davidpersson/beanstalk
 
-CMD printenv > /etc/environment && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
+# CMD printenv > /etc/environment && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
