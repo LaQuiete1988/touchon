@@ -40,7 +40,7 @@ services:
       dockerfile: Dockerfile
     container_name: touchon
     restart: always
-    volumes:
+    # volumes:
       # - ./userscripts:${WORK_DIR}/server/userscripts
       # - ./backups:${WORK_DIR}/backups
       # - ~/.hostpipe:${WORK_DIR}/.hostpipe
