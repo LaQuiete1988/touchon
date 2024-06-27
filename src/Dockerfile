@@ -23,7 +23,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests locales locales-all && \
     apt-get install -y --no-install-recommends --no-install-suggests supervisor nginx tzdata \
         iputils-ping cron php8.1-fpm php8.1-bcmath php8.1-mbstring php8.1-mysqli php8.1-pdo php8.1-xml php8.1-curl rsync \
-        openssh-client tar sshpass lftp wget unzip nano gettext-base composer beanstalkd ffmpeg ${EXTRA_PACKAGES} && \
+        openssh-client tar sshpass lftp wget unzip nano gettext-base composer beanstalkd ffmpeg git ca-certificates mysql-client && \
     mkdir -p /opt/mediamtx && \
     wget -qO- https://github.com/bluenviron/mediamtx/releases/download/v1.3.0/mediamtx_v1.3.0_linux_arm64v8.tar.gz | \
         tar xvz -C /opt/mediamtx && \
