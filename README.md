@@ -1,5 +1,5 @@
 # TouchON docker-compose environment
-ver develop
-
-adm     develop
-core    develop
+ver develop\
+\
+adm - ver develop\
+core - ver develop
