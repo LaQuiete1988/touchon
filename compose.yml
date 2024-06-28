@@ -33,10 +33,6 @@ services:
       context: ./src/
       args:
         WORK_DIR: ${WORK_DIR}
-        FTP_USER: ${FTP_USER}
-        FTP_PASSWORD: ${FTP_PASSWORD}
-        FTP_SERVER: ${FTP_SERVER}
-      dockerfile: Dockerfile
     container_name: touchon
     restart: always
     depends_on:
@@ -44,7 +40,6 @@ services:
     volumes:
       - ./apps/server:${WORK_DIR}/server
       - ./apps/adm:${WORK_DIR}/adm
-      #- ./userscripts:${WORK_DIR}/server/userscripts
       - ./backups:${WORK_DIR}/backups
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe

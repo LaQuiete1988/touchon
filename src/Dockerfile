@@ -1,13 +1,12 @@
 FROM ubuntu:22.04
 
-ARG WORK_DIR
-ARG EXTRA_PACKAGES
+ARG WORK_DIR=/opt/touchon
 ARG DEBIAN_FRONTEND=noninteractive
 ARG FTP_USER
 ARG FTP_PASSWORD
 ARG FTP_SERVER
-ARG ADM_VER=1.17
-ARG CORE_VER=1.14
+ARG ADM_VER
+ARG CORE_VER
 
 ENV LANG=en_GB.UTF-8
 ENV LANGUAGE=en_GB.UTF-8
@@ -65,7 +64,17 @@ RUN apt-get update && \
 * * * * * cd \${WORK_DIR}/adm && php artisan schedule:run >> /dev/null 2>&1\
 ") | crontab && \
     envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf && \
-    rm -rf ${WORK_DIR}/.temp && \
+    rm -rf ${WORK_DIR}/.temp
+    
+RUN if [ ! -z ${CORE_VER} ] ; then \
+    wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
+    unzip -q ${WORK_DIR}/core-release-${CORE_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
+    rm ${WORK_DIR}/core-release-${CORE_VER}.zip && \
+    composer -n -d ${WORK_DIR}/server clearcache && \
+    composer -n -d ${WORK_DIR}/server require workerman/workerman aldas/modbus-tcp-client davidpersson/beanstalk; \
+    fi
+
+RUN if [ ! -z ${ADM_VER} ] ; then \
     wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/adm-release-${ADM_VER}.zip && \
     unzip -q ${WORK_DIR}/adm-release-${ADM_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/adm-release-${ADM_VER}.zip && \
@@ -96,11 +105,7 @@ QUEUE_DRIVER=sync' >> ${WORK_DIR}/adm/.env && \
     php ${WORK_DIR}/adm/artisan key:generate --force && \
     [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
     [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
-    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts && \
-    wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
-    unzip -q ${WORK_DIR}/core-release-${CORE_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
-    rm ${WORK_DIR}/core-release-${CORE_VER}.zip && \
-    composer -n -d ${WORK_DIR}/server clearcache && \
-    composer -n -d ${WORK_DIR}/server require workerman/workerman aldas/modbus-tcp-client davidpersson/beanstalk
+    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts; \
+    fi
 
 CMD printenv > /etc/environment && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf

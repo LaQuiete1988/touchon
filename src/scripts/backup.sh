@@ -187,30 +187,30 @@ if [[ ! -d ${WORK_DIR}/backups/weekly ]]; then
     mkdir -p ${WORK_DIR}/backups/weekly
 fi
 
-if [[ "${SSH_CLIENT_DIR:-unset}" == "unset" ]]; then
+userscriptsBackup
+versionsBackup
+dbBackup
+controllersBackup
+mikrotikBackup
+
+# if [[ "${SSH_CLIENT_DIR:-unset}" == "unset" ]]; then
     
-    echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] SSH_CLIENT_DIR variable in .env file is not set." \
-        >> /var/log/cron.log
+#     echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] SSH_CLIENT_DIR variable in .env file is not set." \
+#         >> /var/log/cron.log
 
-else
+# else
 
-    userscriptsBackup
-    versionsBackup
-    dbBackup
-    controllersBackup
-    mikrotikBackup
+    # userscriptsTarToRemote daily
+    # dbTarToRemote daily
+    # controllersTarToRemote daily
+    # mikrotikTarToRemote daily
 
-    userscriptsTarToRemote daily
-    dbTarToRemote daily
-    controllersTarToRemote daily
-    mikrotikTarToRemote daily
+    # if [[ ! $(ls ${WORK_DIR}/backups/weekly) ]] || [[ $(date +'%u') == 1 ]]; then
+    #     cp -r ${WORK_DIR}/backups/daily/* ${WORK_DIR}/backups/weekly
+    #     userscriptsTarToRemote weekly
+    #     dbTarToRemote weekly
+    #     controllersTarToRemote weekly
+    #     mikrotikTarToRemote weekly
+    # fi
 
-    if [[ ! $(ls ${WORK_DIR}/backups/weekly) ]] || [[ $(date +'%u') == 1 ]]; then
-        cp -r ${WORK_DIR}/backups/daily/* ${WORK_DIR}/backups/weekly
-        userscriptsTarToRemote weekly
-        dbTarToRemote weekly
-        controllersTarToRemote weekly
-        mikrotikTarToRemote weekly
-    fi
-
-fi
+# fi
