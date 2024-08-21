@@ -24,7 +24,7 @@ services:
     network_mode: host
     volumes:
       - mysql:/var/lib/mysql
-  
+
   mqtt:
     image: eclipse-mosquitto
     container_name: mqtt
