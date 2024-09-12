@@ -1,5 +1,3 @@
-version: '3.4'
-
 # Services
 services:
 
@@ -25,6 +23,14 @@ services:
     volumes:
       - mysql:/var/lib/mysql
 
+  mqtt:
+    image: eclipse-mosquitto
+    container_name: mqtt
+    restart: always
+    network_mode: host
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+  
   # Touchon
   touchon:
     env_file:
