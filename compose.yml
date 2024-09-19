@@ -1,7 +1,5 @@
-# Services
 services:
-
-  # PhpMyAdmin Service
+  
   phpmyadmin:
     image: phpmyadmin:5.2
     container_name: phpmyadmin
@@ -14,7 +12,6 @@ services:
       APACHE_PORT: 7000
     network_mode: host
 
-  # MariaDB Service
   mysql:
     image: mariadb:10.7
     container_name: mysql
@@ -33,7 +30,6 @@ services:
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
-  # Touchon
   touchon:
     env_file:
       - ./.env
@@ -46,13 +42,10 @@ services:
     depends_on:
       - mysql
     volumes:
-      - ./apps/server:${WORK_DIR}/server
-      - ./apps/adm:${WORK_DIR}/adm
       - ./backups:${WORK_DIR}/backups
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
-      - /root/.ssh:/root/.ssh
     network_mode: host
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
