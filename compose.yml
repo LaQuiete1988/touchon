@@ -1,38 +1,45 @@
-version: '3.4'
-
-# Services
 services:
-
-# PhpMyAdmin Service
+  
   phpmyadmin:
     image: phpmyadmin:5.2
     container_name: phpmyadmin
     restart: always
+    env_file:
+      - ./.env
     environment:
-      PMA_HOST: 127.0.0.1
-      PMA_PORT: 3306
+      PMA_HOST: ${MYSQL_HOST}
+      PMA_PORT: ${MYSQL_PORT}
       APACHE_PORT: 7000
     network_mode: host
 
-  # Touchon
-  touchon:
-    env_file:
-      - ~/touchon/.env
-    build:
-      context: ~/touchon/src/
-      args:
-        UBUNTU_VERSION: jammy
-        WORK_DIR: ${WORK_DIR}
-      dockerfile: Dockerfile
-    container_name: touchon
+  mysql:
+    image: mariadb:10.7
+    container_name: mysql
     restart: always
+    env_file:
+      - ./.env
+    network_mode: host
     volumes:
       - mysql:/var/lib/mysql
-      - adm:${WORK_DIR}/adm
-      - server:${WORK_DIR}/server 
-      - backups:${WORK_DIR}/backups
-      - ~/touchon/src/configs:${WORK_DIR}/configs
-      - ~/touchon/src/scripts:${WORK_DIR}/scripts
+
+  mqtt:
+    image: eclipse-mosquitto
+    container_name: mqtt
+    restart: always
+    network_mode: host
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  touchon:
+    image: 178.57.106.190:5000/touchon:1.2-jethome
+    env_file:
+      - ./.env
+    container_name: touchon
+    restart: always
+    depends_on:
+      - mysql
+    volumes:
+      - ./backups:${WORK_DIR}/backups
       - ~/.hostpipe:${WORK_DIR}/.hostpipe
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
@@ -43,6 +50,3 @@ services:
 
 volumes:
   mysql:
-  server:
-  adm:
-  backups:
