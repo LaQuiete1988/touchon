@@ -2,6 +2,7 @@ services:
   
   phpmyadmin:
     image: phpmyadmin:5.2
+    platform: linux/amd64
     container_name: phpmyadmin
     restart: always
     env_file:
@@ -14,6 +15,7 @@ services:
 
   mysql:
     image: mariadb:10.7
+    platform: linux/amd64
     container_name: mysql
     restart: always
     env_file:
@@ -24,6 +26,7 @@ services:
 
   mqtt:
     image: eclipse-mosquitto
+    platform: linux/amd64
     container_name: mqtt
     restart: always
     network_mode: host
@@ -45,9 +48,10 @@ services:
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
     network_mode: host
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
-      - "/dev/ttyUSB1:/dev/ttyUSB1"
+    # devices:
+    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
+    #   - "/dev/ttyUSB1:/dev/ttyUSB1"
+    privileged: true
 
 volumes:
   mysql:
