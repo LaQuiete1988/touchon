@@ -67,7 +67,7 @@ RUN apt-get update && \
     rm -rf ${WORK_DIR}/.temp
     
 RUN if [ ! -z ${CORE_VER} ] ; then \
-    wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
+    wget -P ${WORK_DIR} -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
     unzip -q ${WORK_DIR}/core-release-${CORE_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/core-release-${CORE_VER}.zip && \
     composer -n -d ${WORK_DIR}/server clearcache && \
@@ -75,7 +75,7 @@ RUN if [ ! -z ${CORE_VER} ] ; then \
     fi
 
 RUN if [ ! -z ${ADM_VER} ] ; then \
-    wget -P ${WORK_DIR} -r -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/adm-release-${ADM_VER}.zip && \
+    wget -P ${WORK_DIR} -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/adm-release-${ADM_VER}.zip && \
     unzip -q ${WORK_DIR}/adm-release-${ADM_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/adm-release-${ADM_VER}.zip && \
     echo '\
