@@ -71,7 +71,7 @@ RUN if [ ! -z ${CORE_VER} ] ; then \
     unzip -q ${WORK_DIR}/core-release-${CORE_VER}.zip -d ${WORK_DIR} >/dev/null 2>&1 && \
     rm ${WORK_DIR}/core-release-${CORE_VER}.zip && \
     composer -n -d ${WORK_DIR}/server clearcache && \
-    composer -n -d ${WORK_DIR}/server require workerman/workerman aldas/modbus-tcp-client davidpersson/beanstalk php-mqtt/client; \
+    composer -n -d ${WORK_DIR}/server update; \
     fi
 
 RUN if [ ! -z ${ADM_VER} ] ; then \
