@@ -34,7 +34,7 @@ services:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   touchon:
-    image: 178.57.106.190:5000/touchon:1.4-jethome
+    image: 178.57.106.190:5000/touchon:1.5-jethome
     env_file:
       - ./.env
     container_name: touchon
@@ -48,9 +48,6 @@ services:
       - ~/.dockerpipe:${WORK_DIR}/.dockerpipe
       - /etc/network/interfaces.d/netcfg:/etc/network/interfaces.d/netcfg
     network_mode: host
-    # devices:
-    #   - "/dev/ttyUSB0:/dev/ttyUSB0"
-    #   - "/dev/ttyUSB1:/dev/ttyUSB1"
     privileged: true
 
 volumes:
