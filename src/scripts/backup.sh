@@ -19,7 +19,7 @@ function dbBackup ()
         mkdir -p ${WORK_DIR}/backups/daily/db
     fi
 
-    mysqldump --host=${MYSQL_HOST} --user=${MYSQL_USER} --password=${MYSQL_PASSWORD} ${MYSQL_DATABASE} \
+    mysqldump --column-statistics=0 --host=${MYSQL_HOST} --user=${MYSQL_USER} --password=${MYSQL_PASSWORD} ${MYSQL_DATABASE} \
         | gzip > ${WORK_DIR}/backups/daily/db/db_backup.sql.gz
 
     if [[ -f ${WORK_DIR}/backups/daily/db/db_backup.sql.gz ]]; then
@@ -83,7 +83,12 @@ controllersBackup()
         mkdir -p ${WORK_DIR}/backups/daily/controllers
     fi
 
-    ipString=$(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -se "SELECT ip_address FROM $MYSQL_DATABASE.devices WHERE type=1 AND active=1;")
+    ipString=$(mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -se \
+    "use ${MYSQL_DATABASE}; \
+    SELECT devices.ip_address FROM devices \
+    JOIN devtypes ON devices.type = devtypes.id \
+    WHERE devtypes.name = 'Monoblock 14IN/14OUT' OR devtypes.name = 'MegaD-2561' \
+    AND active=1;")
     ip_array=($ipString)
 
     # echo "Array size: ${#ip_array[*]}"
@@ -93,7 +98,7 @@ controllersBackup()
         echo ${ip_array[i]}
         php ${WORK_DIR}/scripts/megad-cfg-2561.php \
             --ip ${ip_array[i]} --read-conf ${WORK_DIR}/backups/daily/controllers/${ip_array[i]}.cfg \
-            -p sec --local-ip $(ip -4 addr show dev eth0 | grep eth0:2 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+            -p sec --local-ip ${ip_array[i]%.*}.1
     done
 }
 
@@ -108,6 +113,7 @@ mikrotikBackup()
         "/system backup save name=mikrotik" 
     sshpass -p ${MIKROTIK_PASSWORD} scp -o StrictHostKeyChecking=no \
         ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.backup ${WORK_DIR}/backups/daily/mikrotik
+    chmod 644 ${WORK_DIR}/backups/daily/mikrotik/mikrotik.backup
     # Uncomment to get a .rsc backup file from a device.
     # sshpass -p ${MIKROTIK_PASSWORD} scp -o StrictHostKeyChecking=no \
     #     ${MIKROTIK_USER}@${MIKROTIK_IP}:mikrotik.rsc ${WORK_DIR}/backups/daily/mikrotik
@@ -115,69 +121,69 @@ mikrotikBackup()
 }
 
 # $1 - daily or weekly
-userscriptsTarToRemote()
-{
-    tar zcvf - -C ${WORK_DIR}/backups/$1/userscripts . | ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
-        "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir -p ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
-        && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/userscripts.tar.gz"
+# userscriptsTarToRemote()
+# {
+#     tar zcvf - -C ${WORK_DIR}/backups/$1/userscripts . | ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
+#         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir -p ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
+#         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/userscripts.tar.gz"
 
-    if [ $? -eq 0 ]; then
-        echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Userscripts $1 backup syncronization with BackupServer succeeded." \
-            >> /var/log/cron.log
-    else
-        echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] Userscripts $1 backup syncronization with BackupServer failed." \
-            >> /var/log/cron.log
-    fi
-}
+#     if [ $? -eq 0 ]; then
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Userscripts $1 backup syncronization with BackupServer succeeded." \
+#             >> /var/log/cron.log
+#     else
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] Userscripts $1 backup syncronization with BackupServer failed." \
+#             >> /var/log/cron.log
+#     fi
+# }
 
 # $1 - daily or weekly
-dbTarToRemote()
-{
-    tar zcvf - -C ${WORK_DIR}/backups/$1/db . | \
-        ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
-        "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
-        && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/db.tar.gz"
+# dbTarToRemote()
+# {
+#     tar zcvf - -C ${WORK_DIR}/backups/$1/db . | \
+#         ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
+#         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
+#         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/db.tar.gz"
 
-    if [ $? -eq 0 ]; then
-        echo "$(date +'%b %d %H:%M:%S')  Backup [OK] DB $1 backup syncronization with BackupServer succeeded." \
-            >> /var/log/cron.log
-    else
-        echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] DB $1 backup syncronization with BackupServer failed." \
-            >> /var/log/cron.log
-    fi
-}
+#     if [ $? -eq 0 ]; then
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [OK] DB $1 backup syncronization with BackupServer succeeded." \
+#             >> /var/log/cron.log
+#     else
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] DB $1 backup syncronization with BackupServer failed." \
+#             >> /var/log/cron.log
+#     fi
+# }
 
-controllersTarToRemote()
-{
-    tar zcvf - -C ${WORK_DIR}/backups/$1/controllers . | \
-        ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
-        "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
-        && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/controllers.tar.gz"
+# controllersTarToRemote()
+# {
+#     tar zcvf - -C ${WORK_DIR}/backups/$1/controllers . | \
+#         ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
+#         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
+#         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/controllers.tar.gz"
 
-    if [ $? -eq 0 ]; then
-        echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Controllers $1 backup syncronization with BackupServer succeeded." \
-            >> /var/log/cron.log
-    else
-        echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] Controllers $1 backup syncronization with BackupServer failed." \
-            >> /var/log/cron.log
-    fi
-}
+#     if [ $? -eq 0 ]; then
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Controllers $1 backup syncronization with BackupServer succeeded." \
+#             >> /var/log/cron.log
+#     else
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] Controllers $1 backup syncronization with BackupServer failed." \
+#             >> /var/log/cron.log
+#     fi
+# }
 
-mikrotikTarToRemote()
-{
-    tar zcvf - -C ${WORK_DIR}/backups/$1/mikrotik . | \
-        ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
-        "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
-        && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/mikrotik.tar.gz"
+# mikrotikTarToRemote()
+# {
+#     tar zcvf - -C ${WORK_DIR}/backups/$1/mikrotik . | \
+#         ssh ${SSH_USER}@${SSH_SERVER} -p ${SSH_PORT} -i ${WORK_DIR}/ssh/id_rsa \
+#         "[ -d ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 ] || mkdir ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1 \
+#         && cat > ${SSH_BACKUP_DIR}/${SSH_CLIENT_DIR}/$1/mikrotik.tar.gz"
 
-    if [ $? -eq 0 ]; then
-        echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Mikrotik $1 backup syncronization with BackupServer succeeded." \
-            >> /var/log/cron.log
-    else
-        echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] Mikrotik $1 backup syncronization with BackupServer failed." \
-            >> /var/log/cron.log
-    fi
-}
+#     if [ $? -eq 0 ]; then
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [OK] Mikrotik $1 backup syncronization with BackupServer succeeded." \
+#             >> /var/log/cron.log
+#     else
+#         echo "$(date +'%b %d %H:%M:%S')  Backup [ERROR] Mikrotik $1 backup syncronization with BackupServer failed." \
+#             >> /var/log/cron.log
+#     fi
+# }
 
 if [[ ! -d ${WORK_DIR}/backups/daily ]]; then
     mkdir -p ${WORK_DIR}/backups/daily
@@ -192,6 +198,10 @@ versionsBackup
 dbBackup
 controllersBackup
 mikrotikBackup
+
+ if [[ ! $(ls ${WORK_DIR}/backups/weekly) ]] || [[ $(date +'%u') == 1 ]]; then
+        cp -r ${WORK_DIR}/backups/daily/* ${WORK_DIR}/backups/weekly
+fi
 
 # if [[ "${SSH_CLIENT_DIR:-unset}" == "unset" ]]; then
     
