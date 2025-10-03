@@ -34,7 +34,7 @@ services:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   touchon:
-    image: 178.57.106.190:5000/touchon:1.6.1-jethome
+    image: 178.57.106.190:5000/touchon:1.6.2-jethome
     env_file:
       - ./.env
     container_name: touchon
