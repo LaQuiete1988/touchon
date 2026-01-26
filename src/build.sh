@@ -6,13 +6,24 @@
 
 source ../.env
 
-DOCKER_BUILDKIT=1 docker build \
-    -t ${REGISTRY}/touchon:${VER}-jethome \
+# docker buildx rm touchon-builder || true
+docker run --privileged --rm tonistiigi/binfmt --install all
+
+docker buildx create \
+    --use \
+    --name touchon-builder \
+    --driver docker-container
+
+DOCKER_BUILDKIT=1 docker buildx build \
+    --progress=plain \
+    --builder touchon-builder \
+    --provenance false \
+    --platform linux/arm/v7,linux/arm64,linux/amd64 \
+    -t dhub.touchon.tech/touchon-v1:${VER} \
     --build-arg FTP_SERVER=${FTP_SERVER} \
     --build-arg FTP_USER=${FTP_USER} \
     --build-arg FTP_PASSWORD=${FTP_PASSWORD} \
     --build-arg ADM_VER=${ADM_VER} \
     --build-arg CORE_VER=${CORE_VER} \
-    --no-cache \
+    --push \
     .
-docker push ${REGISTRY}/touchon:${VER}-jethome

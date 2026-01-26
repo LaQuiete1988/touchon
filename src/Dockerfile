@@ -7,6 +7,7 @@ ARG FTP_PASSWORD
 ARG FTP_SERVER
 ARG ADM_VER
 ARG CORE_VER
+ARG TARGETARCH TARGETPLATFORM TARGETVARIANT
 
 ENV LANG=en_GB.UTF-8
 ENV LANGUAGE=en_GB.UTF-8
@@ -21,24 +22,12 @@ COPY ./temp ${WORK_DIR}/.temp
 RUN apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests locales locales-all && \
     apt-get install -y --no-install-recommends --no-install-suggests supervisor nginx tzdata \
-        iputils-ping cron php8.1-fpm php8.1-bcmath php8.1-mbstring php8.1-mysqli php8.1-pdo php8.1-xml php8.1-curl rsync \
-        openssh-client tar sshpass lftp wget unzip nano gettext-base composer beanstalkd ffmpeg git ca-certificates mysql-client && \
-    mkdir -p /opt/mediamtx && \
-    wget -qO- https://github.com/bluenviron/mediamtx/releases/download/v1.3.0/mediamtx_v1.3.0_linux_arm64v8.tar.gz | \
-        tar xvz -C /opt/mediamtx && \
-    chmod +x /opt/mediamtx/mediamtx && \
-    sed -i \
-        -e 's,api:.*,api: yes,g' \
-        -e 's,apiAddress:.*,apiAddress: :9997,g' \
-        -e 's,rtmp:.*,rtmp: no,g' \
-        -e 's,rtsp:.*,rtsp: no,g' \
-        -e 's,webrtc:.*,webrtc: no,g' \
-        -e 's,srt:.*,srt: no,g' \
-        -e 's,hlsVariant:.*,hlsVariant: fmp4,g' \
-        -e 's,hlsAlwaysRemux:.*,hlsAlwaysRemux: true,g' \
-        -e 's,rtspTransport:.*,rtspTransport: tcp,g' \
-    /opt/mediamtx/mediamtx.yml &&\
-    mkdir -p /var/log/supervisor && \
+        iputils-ping cron rsync openssh-client tar sshpass lftp wget unzip nano gettext-base composer\
+        php8.1-fpm php8.1-bcmath php8.1-mbstring php8.1-mysqli php8.1-pdo php8.1-xml php8.1-curl \
+        beanstalkd ffmpeg git ca-certificates mysql-client
+
+
+RUN mkdir -p /var/log/supervisor && \
     mkdir ${WORK_DIR}/logs && \
     sed -i \
         -e 's,.*date.timezone =.*,date.timezone = 'Europe/Moscow',g' \
@@ -65,6 +54,22 @@ RUN apt-get update && \
 ") | crontab && \
     envsubst '${WORK_DIR}' < ${WORK_DIR}/.temp/nginx.conf.template > /etc/nginx/conf.d/touchon.conf && \
     rm -rf ${WORK_DIR}/.temp
+
+RUN mkdir -p /opt/mediamtx && \
+    wget -qO- https://github.com/bluenviron/mediamtx/releases/download/v1.15.6/mediamtx_v1.15.6_linux_${TARGETARCH}${TARGETVARIANT}.tar.gz | \
+        tar xvz -C /opt/mediamtx && \
+    chmod +x /opt/mediamtx/mediamtx && \
+    sed -i \
+        -e 's,api:.*,api: yes,g' \
+        -e 's,apiAddress:.*,apiAddress: :9997,g' \
+        -e 's,rtmp:.*,rtmp: no,g' \
+        -e 's,rtsp:.*,rtsp: no,g' \
+        -e 's,webrtc:.*,webrtc: no,g' \
+        -e 's,srt:.*,srt: no,g' \
+        -e 's,hlsVariant:.*,hlsVariant: fmp4,g' \
+        -e 's,hlsAlwaysRemux:.*,hlsAlwaysRemux: true,g' \
+        -e 's,rtspTransport:.*,rtspTransport: tcp,g' \
+    /opt/mediamtx/mediamtx.yml
     
 RUN if [ ! -z ${CORE_VER} ] ; then \
     wget -P ${WORK_DIR} -nd --user=${FTP_USER} --password=${FTP_PASSWORD} ftp://${FTP_SERVER}/core-release-${CORE_VER}.zip && \
@@ -103,9 +108,13 @@ QUEUE_DRIVER=sync' >> ${WORK_DIR}/adm/.env && \
     composer -n -d ${WORK_DIR}/adm install && \
     php ${WORK_DIR}/adm/artisan config:clear && \
     php ${WORK_DIR}/adm/artisan key:generate --force && \
-    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
-    [[ -d ${WORK_DIR}/adm/storage/app/scripts ]] && rm -rf ${WORK_DIR}/adm/storage/app/scripts && \
-    [[ -L ${WORK_DIR}/adm/storage/app/scripts ]] || ln -s ${WORK_DIR}/server/userscripts ${WORK_DIR}/adm/storage/app/scripts; \
+    if [ -L "${WORK_DIR}/adm/storage/app/scripts" ]; then \
+        rm -rf "${WORK_DIR}/adm/storage/app/scripts"; \
+    fi && \
+    if [ -d "${WORK_DIR}/adm/storage/app/scripts" ]; then \
+        rm -rf "${WORK_DIR}/adm/storage/app/scripts"; \
+    fi && \
+    ln -s "${WORK_DIR}/server/userscripts" "${WORK_DIR}/adm/storage/app/scripts"; \
     fi
 
 CMD printenv > /etc/environment && /usr/bin/supervisord -c ${WORK_DIR}/configs/supervisord.conf
